@@ -34,8 +34,9 @@ class NPCScreen(BaseScreen):
         )
 
         self.show_form = False
-        
         self.selected_npc = None
+        
+        self.form_mode = "create"
         
         self.npc_rects = {}
         
@@ -45,6 +46,14 @@ class NPCScreen(BaseScreen):
             120,
             45,
             "Voltar"
+        )
+        
+        self.edit_button = Button(
+            420,
+            110,
+            120,
+            45,
+            "Editar"
         )
 
         self.repository = self.app.npc_repository
@@ -138,7 +147,10 @@ class NPCScreen(BaseScreen):
             if event.key == pygame.K_ESCAPE:
                 
                 if self.show_form:
+                    self.clear_form()
+                    
                     self.show_form = False
+                    self.form_mode = "create"
                     
                 elif self.selected_npc is not None:
                     self.selected_npc = None
@@ -157,13 +169,24 @@ class NPCScreen(BaseScreen):
         self.notes_input.handle_event(event)
         
         if self.cancel_button.handle_event(event):
+            self.clear_form()
+            
             self.show_form = False
+            self.form_mode = "create"
         
         if self.create_button.handle_event(event):
-            self.create_npc()
+            self.submit_form()
     
     def handle_list_events(self, event):
         if self.new_npc_button.handle_event(event):
+            self.form_mode = "create"
+            
+            self.selected_npc = None
+            
+            self.clear_form()
+            
+            self.create_button.text = "Criar NPC"
+            
             self.show_form = True
         
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -182,6 +205,10 @@ class NPCScreen(BaseScreen):
     def handle_detail_events(self, event):
         if self.back_button.handle_event(event):
             self.selected_npc = None
+            return
+
+        if self.edit_button.handle_event(event):
+            self.open_edit_form()
         
     def render(self, screen):
         super().render(screen)
@@ -196,8 +223,13 @@ class NPCScreen(BaseScreen):
             self.render_npc_list(screen)
         
     def render_form(self, screen):
+        if self.form_mode == "edit":
+            title_text = "Editar NPC"
+        else:
+            title_text = "Criar NPC"
+        
         title = self.title_font.render(
-            "Criar NPC",
+            title_text,
             True,
             (240, 240, 240)
         )
@@ -399,6 +431,7 @@ class NPCScreen(BaseScreen):
         )
         
         self.back_button.render(screen)
+        self.edit_button.render(screen)
         
         info_x = 300
         info_y = 190
@@ -518,6 +551,62 @@ class NPCScreen(BaseScreen):
         self.clear_form()
         
         self.show_form = False
+    
+    def update_npc(self):
+        npc = self.selected_npc
+        
+        if npc is None:
+            return
+        
+        name = self.name_input.text.strip()
+        
+        if not name:
+            return
+        
+        npc.name = name
+        npc.race = self.race_input.text.strip()
+        npc.role = self.role_input.text.strip()
+        npc.region = self.region_input.text.strip()
+
+        npc.description = (
+            self.description_input.text.strip()
+        )
+
+        npc.personality = (
+            self.personality_input.text.strip()
+        )
+
+        npc.notes = (
+            self.notes_input.text.strip()
+        )
+
+        self.repository.update(npc)
+
+        self.clear_form()
+
+        self.show_form = False
+        self.form_mode = "create"
+    
+    def open_edit_form(self):
+        npc = self.selected_npc
+        
+        if npc is None:
+            return
+        
+        self.form_mode = "edit"
+        
+        self.name_input.text = npc.name
+        self.race_input.text = npc.race
+        self.role_input.text = npc.role
+        self.region_input.text = npc.region
+
+        self.description_input.text = npc.description
+        self.personality_input.text = npc.personality
+        self.notes_input.text = npc.notes
+
+        self.create_button.text = "Salvar"
+
+        self.show_form = True
         
     def clear_form(self):
         
@@ -529,8 +618,14 @@ class NPCScreen(BaseScreen):
         self.description_input.text = ""
         self.personality_input.text = ""
         self.notes_input.text = ""
-        
-        
+      
+    def submit_form(self):
+        if self.form_mode == "create":
+            self.create_npc()
+            
+        elif self.form_mode == "edit":
+            self.update_npc()
+             
     def draw_wrapped_text(
         self,
         screen,
@@ -595,3 +690,5 @@ class NPCScreen(BaseScreen):
                 y += self.info_font.get_linesize()
             y += 5
         return y
+    
+    

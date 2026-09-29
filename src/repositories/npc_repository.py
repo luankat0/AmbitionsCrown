@@ -77,3 +77,40 @@ class NPCRepository:
             npcs.append(npc)
 
         return npcs
+    
+    def update(self, npc):
+        if npc.id is None:
+            raise ValueError(
+                "Não é possível atualizar um NPC sem ID."
+            )
+            
+        cursor = self.database.connection.cursor()
+        
+        cursor.execute(
+            """
+            UPDATE npcs
+            SET
+                name = ?,
+                race = ?,
+                role = ?,
+                region = ?,
+                description = ?,
+                personality = ?,
+                notes = ?
+            WHERE id = ?
+            """,
+            (
+                npc.name,
+                npc.race,
+                npc.role,
+                npc.region,
+                npc.description,
+                npc.personality,
+                npc.notes,
+                npc.id
+            )
+        )
+
+        self.database.connection.commit()
+
+        return npc
