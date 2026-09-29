@@ -1,6 +1,9 @@
 import pygame
 
+from src.models.npc import NPC
+
 from src.screens.base_screen import BaseScreen
+
 from src.ui.button import Button
 from src.ui.text_input import TextInput
 from src.ui.text_area import TextArea
@@ -275,7 +278,7 @@ class NPCScreen(BaseScreen):
 
         for npc in self.npcs:
             name = self.info_font.render(
-                npc["name"],
+                npc.name,
                 True,
                 (235, 235, 240)
             )
@@ -285,14 +288,10 @@ class NPCScreen(BaseScreen):
                 (310, y)
             )
 
-            details = (
-                f'{npc["race"]} • '
-                f'{npc["role"]} • '
-                f'{npc["region"]}'
-            )
-
+            details = npc.get_summary()
+            
             details_surface = self.info_font.render(
-                details,
+                npc.get_summary(),
                 True,
                 (155, 155, 165)
             )
@@ -324,16 +323,15 @@ class NPCScreen(BaseScreen):
         if not self.name_input.text.strip():
             return
         
-        npc = {
-            "name": self.name_input.text.strip(),
-            "race": self.race_input.text.strip(),
-            "role": self.role_input.text.strip(),
-            "region": self.region_input.text.strip(),
-            
-            "description": self.description_input.text.strip(),
-            "personality": self.personality_input.text.strip(),
-            "notes": self.notes_input.text.strip()
-        }
+        npc = NPC(
+            name=self.name_input.text.strip(),
+            race=self.race_input.text.strip(),
+            role=self.role_input.text.strip(),
+            region=self.region_input.text.strip(),
+            description=self.description_input.text.strip(),
+            personality=self.personality_input.text.strip(),
+            notes=self.notes_input.text.strip()
+        )
         
         self.npcs.append(npc)
         
@@ -342,6 +340,7 @@ class NPCScreen(BaseScreen):
         self.show_form = False
         
     def clear_form(self):
+        
         self.name_input.text = ""
         self.race_input.text = ""
         self.role_input.text = ""
@@ -350,3 +349,4 @@ class NPCScreen(BaseScreen):
         self.description_input.text = ""
         self.personality_input.text = ""
         self.notes_input.text = ""
+        
