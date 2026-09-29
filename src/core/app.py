@@ -1,5 +1,7 @@
 import pygame
 
+from src.screens.dashboard import DashboardScreen
+
 class App:
     def __init__(self):
         pygame.init()
@@ -14,19 +16,22 @@ class App:
         pygame.display.set_caption("Ambitions Crown")
 
         self.clock = pygame.time.Clock()
-
         self.running = True
+
+        self.current_screen = DashboardScreen()
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
+            self.current_screen.handle_event(event)
+
     def update(self):
-        pass
+        self.current_screen.update()
 
     def render(self):
-        self.screen.fill((30, 30, 35))
+        self.current_screen.render(self.screen)
 
         pygame.display.flip()
 
