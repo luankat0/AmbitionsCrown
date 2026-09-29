@@ -1,6 +1,7 @@
 import pygame
 
 from src.screens.dashboard import DashboardScreen
+from src.screens.npcs import NPCScreen
 
 class App:
     def __init__(self):
@@ -18,7 +19,14 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.current_screen = DashboardScreen()
+        self.current_screen = DashboardScreen(self)
+
+    def change_screen(self, screen_name):
+            if screen_name == "dashboard":
+                self.current_screen = DashboardScreen(self)
+    
+            elif screen_name == "npcs":
+                self.current_screen = NPCScreen(self)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -42,3 +50,5 @@ class App:
             self.render()
 
             self.clock.tick(60)
+
+        pygame.quit()
