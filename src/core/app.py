@@ -2,6 +2,8 @@ import pygame
 
 from src.core.database import Database
 
+from src.repositories.npc_repository import NPCRepository
+
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
 
@@ -11,6 +13,10 @@ class App:
         
         self.database = Database()
         self.database.create_tables()
+        
+        self.npc_repository = NPCRepository(
+            self.database
+        )
 
         self.width = 1280
         self.height = 720

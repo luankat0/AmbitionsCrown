@@ -35,8 +35,10 @@ class NPCScreen(BaseScreen):
 
         self.show_form = False
 
-        self.npcs = [] # Armazenamento em memória (temporário)
-
+        self.repository = self.app.npc_repository
+        
+        self.npcs = self.repository.get_all()
+        
         self.name_input = TextInput(
             420,
             150,
@@ -333,7 +335,12 @@ class NPCScreen(BaseScreen):
             notes=self.notes_input.text.strip()
         )
         
-        self.npcs.append(npc)
+        self.repository.add(npc)
+        
+        self.npcs.insert(
+            0,
+            npc
+        )
         
         self.clear_form()
         

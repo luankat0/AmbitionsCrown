@@ -16,6 +16,8 @@ class Database:
         self.connection = sqlite3.connect(
             DATABASE_PATH
         )
+        
+        self.connection.row_factory = sqlite3.Row
     
     def create_tables(self):
         cursor = self.connection.cursor()

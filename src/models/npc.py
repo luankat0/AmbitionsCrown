@@ -11,5 +11,8 @@ class NPC:
     personality: str = ""
     notes: str = ""
     
+    id: int | None = None
+    created_at: str | None = None
+    
     def get_summary(self):
             return f"{self.race} • {self.role} • {self.region}"
