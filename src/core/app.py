@@ -1,11 +1,16 @@
 import pygame
 
+from src.core.database import Database
+
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
 
 class App:
     def __init__(self):
         pygame.init()
+        
+        self.database = Database()
+        self.database.create_tables()
 
         self.width = 1280
         self.height = 720
@@ -51,4 +56,6 @@ class App:
 
             self.clock.tick(60)
 
+        self.database.close()
+        
         pygame.quit()
