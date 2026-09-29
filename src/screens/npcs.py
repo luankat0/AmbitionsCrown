@@ -1,10 +1,13 @@
 import pygame
 
-class NPCScreen:
-    def __init__(self, app):
-        self.app = app
+from src.screens.base_screen import BaseScreen
 
-        self.background_color = (30, 30, 35)
+class NPCScreen(BaseScreen):
+    def __init__(self, app):
+        super().__init__(
+            app,
+            "npcs"
+        )
 
         self.title_font = pygame.font.Font(
             None,
@@ -12,15 +15,14 @@ class NPCScreen:
         )
 
     def handle_event(self, event):
+        super().handle_event(event)
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self.app.change_screen("dashboard")
 
-    def update(self):
-        pass
-
     def render(self, screen):
-        screen.fill(self.background_color)
+        super().render(screen)
 
         title = self.title_font.render(
             "NPCs",
