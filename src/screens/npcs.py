@@ -3,6 +3,7 @@ import pygame
 from src.screens.base_screen import BaseScreen
 from src.ui.button import Button
 from src.ui.text_input import TextInput
+from src.ui.text_area import TextArea
 
 class NPCScreen(BaseScreen):
     def __init__(self, app):
@@ -34,48 +35,71 @@ class NPCScreen(BaseScreen):
         self.npcs = [] # Armazenamento em memória (temporário)
 
         self.name_input = TextInput(
-            500,
+            420,
             150,
-            400,
+            280,
             42,
             "Nome do NPC"
-        )  
+        )
 
         self.race_input = TextInput(
-            500, 
-            220, 
-            400, 
-            42, 
+            420,
+            220,
+            280,
+            42,
             "Raça"
-        )      
+        )
 
         self.role_input = TextInput(
-            500,
+            420,
             290,
-            400,
+            280,
             42,
             "Profissão ou função"
         )
-        
+
         self.region_input = TextInput(
-            500,
+            420,
             360,
-            400,
+            280,
             42,
             "Região"
         )
+        self.description_input = TextArea(
+            800,
+            150,
+            380,
+            110,
+            "Aparência, histórico ou descrição geral..."
+        )
+
+        self.personality_input = TextArea(
+            800,
+            300,
+            380,
+            110,
+            "Personalidade, comportamento, manias..."
+        )
+
+        self.notes_input = TextArea(
+            800,
+            450,
+            380,
+            110,
+            "Anotações privadas do Mestre..."
+        )
         
         self.cancel_button = Button(
-            500,
-            440,
+            800,
+            590,
             140,
             45,
             "Cancelar"
         )
         
         self.create_button = Button(
-            660,
-            440,
+            960,
+            590,
             160,
             45,
             "Criar NPC"
@@ -119,14 +143,36 @@ class NPCScreen(BaseScreen):
             (280, 40)
         )
 
-        labels = [
+        basic_title = self.info_font.render(
+            "Informações básicas",
+            True,
+            (180, 180, 200)
+        )
+
+        screen.blit(
+            basic_title,
+            (300, 105)
+        )
+
+        characterization_title = self.info_font.render(
+            "Caracterização",
+            True,
+            (180, 180, 200)
+        )
+
+        screen.blit(
+            characterization_title,
+            (800, 105)
+        )
+
+        basic_labels = [
             ("Nome", 150),
             ("Raça", 220),
             ("Função", 290),
             ("Região", 360),
         ]
 
-        for label, y in labels:
+        for label, y in basic_labels:
             label_surface = self.info_font.render(
                 label,
                 True,
@@ -138,13 +184,50 @@ class NPCScreen(BaseScreen):
                 (300, y + 10)
             )
 
+        description_label = self.info_font.render(
+            "Descrição",
+            True,
+            (200, 200, 210)
+        )
+
+        personality_label = self.info_font.render(
+            "Personalidade",
+            True,
+            (200, 200, 210)
+        )
+
+        notes_label = self.info_font.render(
+            "Observações",
+            True,
+            (200, 200, 210)
+        )
+
+        screen.blit(
+            description_label,
+            (800, 125)
+        )
+
+        screen.blit(
+            personality_label,
+            (800, 275)
+        )
+
+        screen.blit(
+            notes_label,
+            (800, 425)
+        )
+
         self.name_input.render(screen)
         self.race_input.render(screen)
         self.role_input.render(screen)
         self.region_input.render(screen)
 
+        self.description_input.render(screen)
+        self.personality_input.render(screen)
+        self.notes_input.render(screen)
+
         self.cancel_button.render(screen)
-        self.create_button.render(screen)    
+        self.create_button.render(screen)
         
     def render_npc_list(self, screen):
         title = self.title_font.render(
@@ -227,6 +310,10 @@ class NPCScreen(BaseScreen):
         self.role_input.handle_event(event)
         self.region_input.handle_event(event)
         
+        self.description_input.handle_event(event)
+        self.personality_input.handle_event(event)
+        self.notes_input.handle_event(event)
+        
         if self.cancel_button.handle_event(event):
             self.show_form = False
         
@@ -241,7 +328,11 @@ class NPCScreen(BaseScreen):
             "name": self.name_input.text.strip(),
             "race": self.race_input.text.strip(),
             "role": self.role_input.text.strip(),
-            "region": self.region_input.text.strip()
+            "region": self.region_input.text.strip(),
+            
+            "description": self.description_input.text.strip(),
+            "personality": self.personality_input.text.strip(),
+            "notes": self.notes_input.text.strip()
         }
         
         self.npcs.append(npc)
@@ -255,3 +346,7 @@ class NPCScreen(BaseScreen):
         self.race_input.text = ""
         self.role_input.text = ""
         self.region_input.text = ""
+        
+        self.description_input.text = ""
+        self.personality_input.text = ""
+        self.notes_input.text = ""
