@@ -196,6 +196,10 @@ class NPCForm:
         self.description_input.text = npc.description
         self.personality_input.text = npc.personality
         self.notes_input.text = npc.notes
+        
+        self.description_input.scroll_line = 0
+        self.personality_input.scroll_line = 0
+        self.notes_input.scroll_line = 0
 
         self.submit_button.text = "Salvar"
         
@@ -226,6 +230,10 @@ class NPCForm:
         self.description_input.text = ""
         self.personality_input.text = ""
         self.notes_input.text = ""
+        
+        self.description_input.scroll_line = 0
+        self.personality_input.scroll_line = 0
+        self.notes_input.scroll_line = 0
         
         for field in self.fields:
             field.active = False
@@ -364,7 +372,15 @@ class NPCForm:
         for field in self.fields:
             field.active = False
         
-        self.fields[index].active = True
+        active_field = self.fields[index]
+        
+        active_field.active = True
+        
+        if isinstance(
+            active_field,
+            TextArea
+        ):
+            active_field.ensure_cursor_visible()
     
     def _get_active_index(self):
         for index, field in enumerate(self.fields):
