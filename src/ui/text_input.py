@@ -79,10 +79,8 @@ class TextInput:
             )
 
             if self.active:
-                # Por enquanto, clicar coloca
-                # o cursor no final.
-                self.cursor_index = len(
-                    self.text
+                self._set_cursor_from_mouse(
+                    event.pos
                 )
 
                 self._ensure_cursor_visible()
@@ -401,3 +399,36 @@ class TextInput:
             ),
             2
         )
+        
+    def _set_cursor_from_mouse(
+        self,
+        mouse_pos
+    ):
+        mouse_x = (
+            mouse_pos[0]
+            - self.rect.x
+            - self.padding
+            - self.scroll_x
+        )
+        
+        best_index = 0
+        best_distance = None
+        
+        for index in range(
+            len(self.text) + 1
+        ):
+            width, _ = self.font.size(
+                self.text[:index]
+            )
+            
+            distance = abs(
+                width - mouse_x
+            )
+
+            if (
+                best_distance is None
+                or distance < best_distance
+            ):
+                best_distance = distance
+                best_index = index
+        self.cursor_index = best_index

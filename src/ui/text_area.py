@@ -80,10 +80,8 @@ class TextArea:
             )
 
             if self.active:
-                # Por enquanto o clique coloca
-                # o cursor no final.
-                self.cursor_index = len(
-                    self.text
+                self._set_cursor_from_mouse(
+                    event.pos
                 )
 
                 self.ensure_cursor_visible()
@@ -789,4 +787,60 @@ class TextArea:
                 + line_height - 2
             ),
             2
+        )
+        
+    def _set_cursor_from_mouse(
+        self,
+        mouse_pos
+    ):
+        lines = self._build_visual_lines()
+        
+        if not lines:
+            self.cursor_index = 0
+            return
+        
+        line_height = (
+            self.font.get_linesize()
+        )
+        
+        mouse_y = (
+            mouse_pos[1]
+            - self.rect.y
+            - self.padding
+        )
+        
+        visual_line = max(
+            0,
+            mouse_y // line_height
+        )
+        
+        line_index = (
+            self.scroll_line
+            + visual_line
+        )
+        
+        line_index = max(
+            0,
+            min(
+                line_index,
+                len(lines) - 1
+            )
+        )
+        
+        _, start, end = lines[
+            line_index
+        ]
+        
+        mouse_x = (
+            mouse_pos[0]
+            - self.rect.x
+            - self.padding
+        )
+        
+        self.cursor_index = (
+            self._find_nearest_index(
+                start,
+                end,
+                mouse_x
+            )
         )
