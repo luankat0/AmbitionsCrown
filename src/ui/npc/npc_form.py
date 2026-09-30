@@ -196,10 +196,6 @@ class NPCForm:
         self.description_input.text = npc.description
         self.personality_input.text = npc.personality
         self.notes_input.text = npc.notes
-        
-        self.description_input.scroll_line = 0
-        self.personality_input.scroll_line = 0
-        self.notes_input.scroll_line = 0
 
         self.submit_button.text = "Salvar"
                 
@@ -214,6 +210,18 @@ class NPCForm:
             )
             
             field.scroll_x = 0
+            
+        for field in [
+            self.description_input,
+            self.personality_input,
+            self.notes_input
+        ]:
+            field.cursor_index = len(
+                field.text
+            )
+            
+            field.scroll_line = 0
+            
             
         self._set_focus(0)
         
@@ -243,10 +251,6 @@ class NPCForm:
         self.personality_input.text = ""
         self.notes_input.text = ""
         
-        self.description_input.scroll_line = 0
-        self.personality_input.scroll_line = 0
-        self.notes_input.scroll_line = 0
-        
         for field in self.fields:
             field.active = False
         
@@ -258,6 +262,17 @@ class NPCForm:
         ]:
             field.cursor_index = 0
             field.scroll_x = 0
+            
+        for field in [
+            self.description_input,
+            self.personality_input,
+            self.notes_input,
+        ]:
+            field.cursor_index = len(
+                field.text
+            )
+            
+            field.scroll_line = 0
         
     def render(self, screen):
         # -------------------------

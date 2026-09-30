@@ -58,11 +58,12 @@ class TextArea:
 
         self.padding = 10
 
-        # -------------------------
-        # Scroll interno
-        # -------------------------
+        # Posição real do cursor na string.
+        self.cursor_index = 0
 
+        # Primeira linha visual exibida.
         self.scroll_line = 0
+
         self.scroll_speed = 2
 
     def handle_event(self, event):
@@ -79,6 +80,12 @@ class TextArea:
             )
 
             if self.active:
+                # Por enquanto o clique coloca
+                # o cursor no final.
+                self.cursor_index = len(
+                    self.text
+                )
+
                 self.ensure_cursor_visible()
 
         # -------------------------
@@ -88,7 +95,9 @@ class TextArea:
         if event.type == pygame.MOUSEWHEEL:
             mouse_pos = pygame.mouse.get_pos()
 
-            if self.rect.collidepoint(mouse_pos):
+            if self.rect.collidepoint(
+                mouse_pos
+            ):
                 self.scroll_line -= (
                     event.y
                     * self.scroll_speed
@@ -99,29 +108,71 @@ class TextArea:
                 return
 
         # -------------------------
-        # Digitação
+        # Teclado
         # -------------------------
 
         if (
             event.type == pygame.KEYDOWN
             and self.active
         ):
-            if event.key == pygame.K_BACKSPACE:
-                self.text = self.text[:-1]
+            self.cursor_index = min(
+                self.cursor_index,
+                len(self.text)
+            )
 
-            elif event.key == pygame.K_RETURN:
-                self.text += "\n"
+            if event.key == pygame.K_BACKSPACE:
+                self._backspace()
+
+            elif event.key == pygame.K_DELETE:
+                self._delete()
+
+            elif event.key == pygame.K_LEFT:
+                self.cursor_index = max(
+                    0,
+                    self.cursor_index - 1
+                )
+
+            elif event.key == pygame.K_RIGHT:
+                self.cursor_index = min(
+                    len(self.text),
+                    self.cursor_index + 1
+                )
+
+            elif event.key == pygame.K_UP:
+                self._move_cursor_vertical(-1)
+
+            elif event.key == pygame.K_DOWN:
+                self._move_cursor_vertical(1)
+
+            elif event.key == pygame.K_HOME:
+                self._move_cursor_home()
+
+            elif event.key == pygame.K_END:
+                self._move_cursor_end()
+
+            elif event.key in (
+                pygame.K_RETURN,
+                pygame.K_KP_ENTER
+            ):
+                self._insert_text("\n")
 
             elif event.key == pygame.K_TAB:
                 return
 
             else:
                 if event.unicode:
-                    self.text += event.unicode
+                    self._insert_text(
+                        event.unicode
+                    )
 
             self.ensure_cursor_visible()
 
     def render(self, screen):
+        self.cursor_index = min(
+            self.cursor_index,
+            len(self.text)
+        )
+
         # -------------------------
         # Fundo
         # -------------------------
@@ -155,7 +206,7 @@ class TextArea:
         )
 
         # -------------------------
-        # Campo vazio
+        # Placeholder
         # -------------------------
 
         if not self.text:
@@ -181,27 +232,28 @@ class TextArea:
             )
 
             if self.active:
+                lines = [
+                    ("", 0, 0)
+                ]
+
                 self._render_cursor(
                     screen,
-                    "",
-                    0
+                    lines
                 )
 
             return
 
         # -------------------------
-        # Texto
+        # Linhas visuais
         # -------------------------
 
-        lines = self.wrap_text(
-            self.text
-        )
+        lines = self._build_visual_lines()
 
         self._clamp_scroll(
             lines
         )
 
-        visible_line_count = (
+        visible_count = (
             self._get_visible_line_count()
         )
 
@@ -210,31 +262,53 @@ class TextArea:
         end_index = min(
             len(lines),
             start_index
-            + visible_line_count
+            + visible_count
         )
 
-        visible_lines = lines[
-            start_index:end_index
-        ]
+        previous_clip = screen.get_clip()
 
-        line_height = (
-            self.font.get_linesize()
+        content_rect = pygame.Rect(
+            self.rect.x + self.padding,
+            self.rect.y + self.padding,
+            self.rect.width
+            - self.padding * 2,
+            self.rect.height
+            - self.padding * 2
         )
+
+        screen.set_clip(
+            content_rect
+        )
+
+        # -------------------------
+        # Texto
+        # -------------------------
 
         y = (
             self.rect.y
             + self.padding
         )
 
-        for line in visible_lines:
-            text_surface = self.font.render(
-                line,
+        line_height = (
+            self.font.get_linesize()
+        )
+
+        for line_index in range(
+            start_index,
+            end_index
+        ):
+            line_text, _, _ = (
+                lines[line_index]
+            )
+
+            surface = self.font.render(
+                line_text,
                 True,
                 self.text_color
             )
 
             screen.blit(
-                text_surface,
+                surface,
                 (
                     self.rect.x
                     + self.padding,
@@ -249,69 +323,321 @@ class TextArea:
         # -------------------------
 
         if self.active:
-            cursor_line_index = (
-                len(lines) - 1
+            self._render_cursor(
+                screen,
+                lines
             )
 
-            if (
-                start_index
-                <= cursor_line_index
-                < end_index
-            ):
-                visual_index = (
-                    cursor_line_index
-                    - start_index
-                )
+        screen.set_clip(
+            previous_clip
+        )
 
-                self._render_cursor(
-                    screen,
-                    lines[cursor_line_index],
-                    visual_index
-                )
+    def _insert_text(self, value):
+        self.text = (
+            self.text[
+                :self.cursor_index
+            ]
+            + value
+            + self.text[
+                self.cursor_index:
+            ]
+        )
 
-    def wrap_text(self, text):
+        self.cursor_index += len(
+            value
+        )
+
+    def _backspace(self):
+        if self.cursor_index <= 0:
+            return
+
+        self.text = (
+            self.text[
+                :self.cursor_index - 1
+            ]
+            + self.text[
+                self.cursor_index:
+            ]
+        )
+
+        self.cursor_index -= 1
+
+    def _delete(self):
+        if self.cursor_index >= len(
+            self.text
+        ):
+            return
+
+        self.text = (
+            self.text[
+                :self.cursor_index
+            ]
+            + self.text[
+                self.cursor_index + 1:
+            ]
+        )
+
+    def _build_visual_lines(self):
         max_width = (
             self.rect.width
             - self.padding * 2
         )
 
+        if not self.text:
+            return [
+                ("", 0, 0)
+            ]
+
         lines = []
 
-        paragraphs = text.split("\n")
+        line_start = 0
+        index = 0
+        last_space = None
 
-        for paragraph in paragraphs:
-            words = paragraph.split(" ")
+        while index < len(self.text):
+            character = self.text[index]
 
-            current_line = ""
-
-            for word in words:
-                test_line = current_line
-
-                if test_line:
-                    test_line += " "
-
-                test_line += word
-
-                width, _ = self.font.size(
-                    test_line
+            # Quebra explícita.
+            if character == "\n":
+                lines.append(
+                    (
+                        self.text[
+                            line_start:index
+                        ],
+                        line_start,
+                        index
+                    )
                 )
 
-                if width <= max_width:
-                    current_line = test_line
+                index += 1
+                line_start = index
+                last_space = None
 
-                else:
-                    if current_line:
-                        lines.append(
-                            current_line
-                        )
+                continue
 
-                    current_line = word
+            candidate = self.text[
+                line_start:index + 1
+            ]
 
-            lines.append(
-                current_line
+            width, _ = self.font.size(
+                candidate
             )
 
+            if width <= max_width:
+                if character == " ":
+                    last_space = index
+
+                index += 1
+                continue
+
+            # -------------------------
+            # Linha ultrapassou largura
+            # -------------------------
+
+            if (
+                last_space is not None
+                and last_space >= line_start
+            ):
+                break_index = (
+                    last_space + 1
+                )
+
+                lines.append(
+                    (
+                        self.text[
+                            line_start:break_index
+                        ],
+                        line_start,
+                        break_index
+                    )
+                )
+
+                line_start = break_index
+                index = line_start
+                last_space = None
+
+                continue
+
+            # Palavra maior que a caixa:
+            # quebra no caractere.
+            if index > line_start:
+                lines.append(
+                    (
+                        self.text[
+                            line_start:index
+                        ],
+                        line_start,
+                        index
+                    )
+                )
+
+                line_start = index
+                last_space = None
+
+                continue
+
+            # Segurança para caracteres
+            # excepcionalmente largos.
+            lines.append(
+                (
+                    character,
+                    index,
+                    index + 1
+                )
+            )
+
+            index += 1
+            line_start = index
+            last_space = None
+
+        # Última linha.
+        lines.append(
+            (
+                self.text[
+                    line_start:
+                ],
+                line_start,
+                len(self.text)
+            )
+        )
+
         return lines
+
+    def _get_cursor_line_index(
+        self,
+        lines
+    ):
+        # Fazemos de trás para frente para
+        # resolver corretamente linhas criadas
+        # por quebra automática.
+        for index in range(
+            len(lines) - 1,
+            -1,
+            -1
+        ):
+            _, start, end = lines[index]
+
+            if (
+                start
+                <= self.cursor_index
+                <= end
+            ):
+                return index
+
+        return 0
+
+    def _move_cursor_vertical(
+        self,
+        direction
+    ):
+        lines = self._build_visual_lines()
+
+        current_line_index = (
+            self._get_cursor_line_index(
+                lines
+            )
+        )
+
+        target_line_index = max(
+            0,
+            min(
+                current_line_index
+                + direction,
+                len(lines) - 1
+            )
+        )
+
+        if (
+            target_line_index
+            == current_line_index
+        ):
+            return
+
+        _, current_start, _ = (
+            lines[current_line_index]
+        )
+
+        text_before_cursor = self.text[
+            current_start:self.cursor_index
+        ]
+
+        desired_x, _ = self.font.size(
+            text_before_cursor
+        )
+
+        _, target_start, target_end = (
+            lines[target_line_index]
+        )
+
+        self.cursor_index = (
+            self._find_nearest_index(
+                target_start,
+                target_end,
+                desired_x
+            )
+        )
+
+    def _find_nearest_index(
+        self,
+        start,
+        end,
+        target_x
+    ):
+        best_index = start
+        best_distance = None
+
+        for index in range(
+            start,
+            end + 1
+        ):
+            width, _ = self.font.size(
+                self.text[
+                    start:index
+                ]
+            )
+
+            distance = abs(
+                width - target_x
+            )
+
+            if (
+                best_distance is None
+                or distance < best_distance
+            ):
+                best_distance = distance
+                best_index = index
+
+        return best_index
+
+    def _move_cursor_home(self):
+        lines = self._build_visual_lines()
+
+        line_index = (
+            self._get_cursor_line_index(
+                lines
+            )
+        )
+
+        _, start, _ = lines[
+            line_index
+        ]
+
+        self.cursor_index = start
+
+    def _move_cursor_end(self):
+        lines = self._build_visual_lines()
+
+        line_index = (
+            self._get_cursor_line_index(
+                lines
+            )
+        )
+
+        _, _, end = lines[
+            line_index
+        ]
+
+        self.cursor_index = end
 
     def _get_visible_line_count(self):
         usable_height = (
@@ -333,12 +659,9 @@ class TextArea:
         lines=None
     ):
         if lines is None:
-            if self.text:
-                lines = self.wrap_text(
-                    self.text
-                )
-            else:
-                lines = [""]
+            lines = (
+                self._build_visual_lines()
+            )
 
         visible_count = (
             self._get_visible_line_count()
@@ -359,19 +682,16 @@ class TextArea:
         )
 
     def ensure_cursor_visible(self):
-        if self.text:
-            lines = self.wrap_text(
-                self.text
+        lines = self._build_visual_lines()
+
+        cursor_line = (
+            self._get_cursor_line_index(
+                lines
             )
-        else:
-            lines = [""]
+        )
 
         visible_count = (
             self._get_visible_line_count()
-        )
-
-        cursor_line = (
-            len(lines) - 1
         )
 
         if cursor_line < self.scroll_line:
@@ -395,22 +715,52 @@ class TextArea:
     def _render_cursor(
         self,
         screen,
-        line,
-        visual_line_index
+        lines
     ):
-        # Faz o cursor piscar.
+        # Cursor piscante.
         if (
             pygame.time.get_ticks()
             // 500
         ) % 2 != 0:
             return
 
+        line_index = (
+            self._get_cursor_line_index(
+                lines
+            )
+        )
+
+        visible_count = (
+            self._get_visible_line_count()
+        )
+
+        if not (
+            self.scroll_line
+            <= line_index
+            < self.scroll_line
+            + visible_count
+        ):
+            return
+
+        _, start, _ = lines[
+            line_index
+        ]
+
+        text_before_cursor = self.text[
+            start:self.cursor_index
+        ]
+
         text_width, _ = self.font.size(
-            line
+            text_before_cursor
         )
 
         line_height = (
             self.font.get_linesize()
+        )
+
+        visual_line = (
+            line_index
+            - self.scroll_line
         )
 
         cursor_x = (
@@ -422,7 +772,7 @@ class TextArea:
         cursor_y = (
             self.rect.y
             + self.padding
-            + visual_line_index
+            + visual_line
             * line_height
         )
 
