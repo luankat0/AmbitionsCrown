@@ -50,6 +50,8 @@ class NPCListView:
             45,
             "Buscar NPC..."
         )
+        
+        self.hovered_npc_id = None
 
     def handle_event(
         self,
@@ -69,6 +71,25 @@ class NPCListView:
         filtered_npcs = self._filter_npcs(
             npcs
         )
+        
+        if event.type == pygame.MOUSEMOTION:
+            self.hovered_npc_id = None
+            
+            if self.list_rect.collidepoint(
+                event.pos
+            ):
+                for index, npc in enumerate(
+                    filtered_npcs
+                ):
+                    card_rect = self._get_card_rect(
+                        index
+                    )
+                    
+                    if card_rect.collidepoint(
+                        event.pos
+                    ):
+                        self.hovered_npc_id = npc.id
+                        break
 
         self._update_scroll_limits(
             filtered_npcs
@@ -150,6 +171,32 @@ class NPCListView:
 
         self.new_npc_button.render(screen)
         self.search_input.render(screen)
+        
+        result_count = len(filtered_npcs)
+        
+        if self.search_input.text.strip():
+            count_text = (
+                f"{result_count} resultado"
+                if result_count == 1
+                else f"{result_count} resultados"
+            )
+        else:
+            count_text = (
+                f"{result_count} NPC"
+                if result_count == 1
+                else f"{result_count} NPCs"
+            )
+        
+        count_surface = self.info_font.render(
+            count_text,
+            True,
+            (150, 150, 160)
+        )
+        
+        screen.blit(
+            count_surface,
+            (850, 122)
+        )
 
         # -------------------------
         # Fundo da lista
@@ -216,9 +263,22 @@ class NPCListView:
             ):
                 continue
 
+            if npc.id == self.hovered_npc_id:
+                card_color = (
+                    58, 
+                    58, 
+                    72
+                )
+            else:
+                card_color = (
+                    45,
+                    45,
+                    55
+                )
+            
             pygame.draw.rect(
                 screen,
-                (45, 45, 55),
+                card_color,
                 card_rect,
                 border_radius=6
             )
