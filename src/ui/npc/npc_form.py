@@ -84,6 +84,16 @@ class NPCForm:
             "Anotações privadas do Mestre..."
         )
         
+        self.fields = [
+            self.name_input,
+            self.race_input,
+            self.role_input,
+            self.region_input,
+            self.description_input,
+            self.personality_input,
+            self.notes_input
+        ]
+        
         # -------------------------
         # Botões
         # -------------------------
@@ -105,6 +115,50 @@ class NPCForm:
         )
         
     def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_TAB:
+                shift_pressed = bool(
+                    event.mod & pygame.KMOD_SHIFT
+                )
+                
+                if shift_pressed:
+                    self._move_focus(-1)
+                else:
+                    self._move_focus(1)
+                
+                return None
+        
+            if event.key in (
+                pygame.K_RETURN,
+                pygame.K_KP_ENTER
+            ):
+                shift_pressed = bool(
+                    event.mod & pygame.KMOD_SHIFT
+                )
+                
+                active_index = (
+                    self._get_active_index()
+                )
+                
+                active_field = None
+                
+                if active_index is not None:
+                    active_field = (
+                        self.fields[active_index]
+                    )
+                
+                if (
+                    shift_pressed
+                    and isinstance(
+                        active_field,
+                        TextArea
+                    )
+                ):
+                    pass
+                
+                else:
+                    return "submit"
+        
         self.name_input.handle_event(event)
         self.race_input.handle_event(event)
         self.role_input.handle_event(event)
@@ -128,6 +182,8 @@ class NPCForm:
         self.clear()
             
         self.submit_button.text = "Criar NPC"
+        
+        self._set_focus(0)
     
     def load_npc(self, npc):
         self.mode = "edit"
@@ -142,6 +198,8 @@ class NPCForm:
         self.notes_input.text = npc.notes
 
         self.submit_button.text = "Salvar"
+        
+        self._set_focus(0)
         
     def build_npc(self):
         name = self.name_input.text.strip()
@@ -168,6 +226,9 @@ class NPCForm:
         self.description_input.text = ""
         self.personality_input.text = ""
         self.notes_input.text = ""
+        
+        for field in self.fields:
+            field.active = False
         
     def render(self, screen):
         # -------------------------
@@ -298,4 +359,32 @@ class NPCForm:
 
         self.cancel_button.render(screen)
         self.submit_button.render(screen)
+    
+    def _set_focus(self, index):
+        for field in self.fields:
+            field.active = False
         
+        self.fields[index].active = True
+    
+    def _get_active_index(self):
+        for index, field in enumerate(self.fields):
+            if field.active:
+                return index
+            
+        return None
+
+    def _move_focus(self, direction):
+        current_index = self._get_active_index()
+        
+        if current_index is None:
+            if direction > 0:
+                next_index = 0
+            else:
+                next_index = len(self.fields) - 1
+        
+        else:
+            next_index = (
+                current_index + direction
+            ) % len(self.fields)
+            
+        self._set_focus(next_index)
