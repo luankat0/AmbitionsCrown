@@ -202,7 +202,19 @@ class NPCForm:
         self.notes_input.scroll_line = 0
 
         self.submit_button.text = "Salvar"
-        
+                
+        for field in [
+            self.name_input,
+            self.race_input,
+            self.role_input,
+            self.region_input,
+        ]:
+            field.cursor_index = len(
+                field.text
+            )
+            
+            field.scroll_x = 0
+            
         self._set_focus(0)
         
     def build_npc(self):
@@ -237,6 +249,15 @@ class NPCForm:
         
         for field in self.fields:
             field.active = False
+        
+        for field in [
+            self.name_input,
+            self.race_input,
+            self.role_input,
+            self.region_input,
+        ]:
+            field.cursor_index = 0
+            field.scroll_x = 0
         
     def render(self, screen):
         # -------------------------
