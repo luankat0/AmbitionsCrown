@@ -3,6 +3,7 @@ import pygame
 from src.ui.button import Button
 from src.ui.npc.npc_form import NPCForm
 from src.ui.npc.npc_list_view import NPCListView
+from src.ui.npc.npc_details_view import NPCDetailsView
 
 from src.screens.base_screen import BaseScreen
 
@@ -25,39 +26,16 @@ class NPCScreen(BaseScreen):
         
         self.form = NPCForm()
         self.list_view = NPCListView()
+        self.details_view = NPCDetailsView()
 
         self.show_form = False
         self.selected_npc = None
-                        
-        self.back_button = Button(
-            280,
-            110,
-            120,
-            45,
-            "Voltar"
-        )
-        
-        self.edit_button = Button(
-            420,
-            110,
-            120,
-            45,
-            "Editar"
-        )
 
         self.repository = self.app.npc_repository
         
         self.npcs = self.repository.get_all()
         
         self.show_delete_confirmation = False
-        
-        self.delete_button = Button(
-            560,
-            110,
-            120,
-            45,
-            "Excluir"
-        )
         
         self.delete_cancel_button = Button(
             500, 
@@ -149,16 +127,19 @@ class NPCScreen(BaseScreen):
             self.selected_npc = npc
             
     def handle_detail_events(self, event):
-        if self.back_button.handle_event(event):
-            self.show_delete_confirmation = False
+        action = self.details_view.handle_event(
+            event
+        )
+        
+        if action == "back":
             self.selected_npc = None
             return
-
-        if self.edit_button.handle_event(event):
+        
+        if action == "edit":
             self.open_edit_form()
             return
-            
-        if self.delete_button.handle_event(event):
+        
+        if action == "delete":
             self.show_delete_confirmation = True
             return
         
@@ -177,7 +158,10 @@ class NPCScreen(BaseScreen):
             self.form.render(screen)
             
         elif self.selected_npc is not None:
-            self.render_npc_details(screen)
+            self.details_view.render(
+                screen,
+                self.selected_npc
+            )
             
         else:
             self.list_view.render(
@@ -190,121 +174,6 @@ class NPCScreen(BaseScreen):
                 screen
             )
         
-    def render_npc_details(self, screen):
-        npc = self.selected_npc
-        
-        if npc is None:
-            return
-        
-        title = self.title_font.render(
-            npc.name,
-            True,
-            (240, 240, 240)
-        )
-        
-        screen.blit(
-            title,
-            (280, 40)
-        )
-        
-        self.back_button.render(screen)
-        self.edit_button.render(screen)
-        self.delete_button.render(screen)
-        
-        info_x = 300
-        info_y = 190
-        
-        basic_info = [
-            ("Raça", npc.race),
-            ("Função", npc.role),
-            ("Região", npc.region),
-        ]
-        
-        description_title = self.info_font.render(
-            "Descrição",
-            True,
-            (180, 180, 200)
-        )
-        
-        screen.blit(
-            description_title,
-            (300, 340)
-        )
-        
-        self.draw_wrapped_text(
-            screen,
-            npc.description,
-            300,
-            375,
-            380,
-            (220, 220, 225)
-        )
-        
-        personality_title = self.info_font.render(
-            "Personalidade",
-            True,
-            (180, 180, 200)
-        )
-
-        screen.blit(
-            personality_title,
-            (750, 190)
-        )
-
-        self.draw_wrapped_text(
-            screen,
-            npc.personality,
-            750,
-            225,
-            400,
-            (220, 220, 225)
-        )
-        
-        notes_title = self.info_font.render(
-            "Observações do Mestre",
-            True,
-            (180, 180, 200)
-        )
-
-        screen.blit(
-            notes_title,
-            (750, 390)
-        )
-
-        self.draw_wrapped_text(
-            screen,
-            npc.notes,
-            750,
-            425,
-            400,
-            (220, 220, 225)
-        )
-        
-        for label, value in basic_info:
-            label_surface = self.info_font.render(
-                f"{label}:",
-                True,
-                (160, 160, 175)
-            )
-            
-            value_surface = self.info_font.render(
-                value if value else "-",
-                True,
-                (230, 230, 235)
-            )
-
-            screen.blit(
-                label_surface,
-                (info_x, info_y)
-            )
-            
-            screen.blit(
-                value_surface,
-                (info_x + 100, info_y)
-            )
-            
-            info_y += 40
-    
     def render_delete_confirmation(self, screen):
         npc = self.selected_npc
         
@@ -462,69 +331,3 @@ class NPCScreen(BaseScreen):
         elif self.form.mode == "edit":
             self.update_npc()
              
-    def draw_wrapped_text(
-        self,
-        screen,
-        text,
-        x,
-        y,
-        max_width,
-        color
-    ):
-        if not text:
-            text = "-"
-        
-        paragraphs = text.split("\n")
-        
-        for paragraph in paragraphs:
-            words = paragraph.split(" ")
-            line = ""
-            
-            for word in words:
-                test_line = line
-                
-                if test_line:
-                    test_line += " "
-                    
-                test_line += word
-                
-                width, _ = self.info_font.size(
-                    test_line
-                )
-                
-                if width <= max_width:
-                    line = test_line
-                
-                else:
-                    surface = self.info_font.render(
-                        line,
-                        True,
-                        color
-                    )
-                    
-                    screen.blit(
-                        surface,
-                        (x, y)
-                    )
-                    
-                    y += self.info_font.get_linesize()
-                    
-                    line = word
-                    
-            if line:
-                surface = self.info_font.render(
-                    line,
-                    True,
-                    color
-                )
-                
-                screen.blit(
-                    surface,
-                    (x, y)
-                )
-                
-                y += self.info_font.get_linesize()
-            y += 5
-        return y
-    
-    
