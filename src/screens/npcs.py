@@ -1,8 +1,9 @@
 import pygame
 
-from src.models.npc import NPC
 from src.ui.button import Button
 from src.ui.npc.npc_form import NPCForm
+from src.ui.npc.npc_list_view import NPCListView
+
 from src.screens.base_screen import BaseScreen
 
 class NPCScreen(BaseScreen):
@@ -23,20 +24,11 @@ class NPCScreen(BaseScreen):
         )
         
         self.form = NPCForm()
-
-        self.new_npc_button = Button(
-            280,
-            110,
-            160,
-            45,
-            "+ Novo NPC"
-        )
+        self.list_view = NPCListView()
 
         self.show_form = False
         self.selected_npc = None
-                
-        self.npc_rects = {}
-        
+                        
         self.back_button = Button(
             280,
             110,
@@ -140,27 +132,22 @@ class NPCScreen(BaseScreen):
             self.submit_form()
     
     def handle_list_events(self, event):
-        if self.new_npc_button.handle_event(event):            
+        action, npc = self.list_view.handle_event(
+            event,
+            self.npcs
+        )
+        
+        if action == "create":
             self.selected_npc = None
             
             self.form.prepare_create()
-                        
+        
             self.show_form = True
             return
         
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                
-                for npc in self.npcs:
-                    if npc.id is None:
-                        continue
-                    
-                    rect = self.npc_rects.get(npc.id)
-                    
-                    if rect and rect.collidepoint(event.pos):
-                        self.selected_npc = npc
-                        return
-    
+        if action == "select":
+            self.selected_npc = npc
+            
     def handle_detail_events(self, event):
         if self.back_button.handle_event(event):
             self.show_delete_confirmation = False
@@ -193,99 +180,16 @@ class NPCScreen(BaseScreen):
             self.render_npc_details(screen)
             
         else:
-            self.render_npc_list(screen)
+            self.list_view.render(
+                screen,
+                self.npcs
+            )
             
         if self.show_delete_confirmation:
-            self.render_delete_confirmation(screen)
+            self.render_delete_confirmation(
+                screen
+            )
         
-    def render_npc_list(self, screen):
-        title = self.title_font.render(
-            "NPCs",
-            True,
-            (240, 240, 240)
-        )
-
-        screen.blit(
-            title,
-            (280, 40)
-        )
-
-        self.new_npc_button.render(screen)
-
-        list_rect = pygame.Rect(
-            280,
-            190,
-            900,
-            450
-        )
-
-        pygame.draw.rect(
-            screen,
-            (36, 36, 44),
-            list_rect,
-            border_radius=8
-        )
-
-        if not self.npcs:
-            empty_text = self.info_font.render(
-                "Nenhum NPC criado ainda.",
-                True,
-                (150, 150, 160)
-            )
-
-            screen.blit(
-                empty_text,
-                (310, 220)
-            )
-
-            return
-        
-        self.npc_rects.clear()
-
-        y = 220
-
-        for npc in self.npcs:
-            card_rect = pygame.Rect(
-                300,
-                y,
-                840,
-                65
-            )
-            
-            pygame.draw.rect(
-                screen,
-                (45, 45, 55),
-                card_rect,
-                border_radius=6
-            )
-            
-            if npc.id is not None:
-                self.npc_rects[npc.id] = card_rect
-                
-            name_surface = self.info_font.render(
-                npc.name,
-                True,
-                (235, 235, 240)
-            )
-            
-            screen.blit(
-                name_surface,
-                (card_rect.x + 15, card_rect.y + 10)
-            )
-            
-            details_surface = self.info_font.render(
-                npc.get_summary(),
-                True,
-                (155, 155, 165)
-            )
-            
-            screen.blit(
-                details_surface,
-                (card_rect.x + 15, card_rect.y + 35)
-            )
-            
-            y += 80
-    
     def render_npc_details(self, screen):
         npc = self.selected_npc
         
