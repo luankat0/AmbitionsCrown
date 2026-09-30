@@ -21,6 +21,14 @@ class TextInput:
         self.placeholder = placeholder
 
         self.active = False
+        
+        self.error = False
+        
+        self.erro_border_color = (
+            180,
+            70,
+            80
+        )
 
         self.font = pygame.font.Font(
             None,
@@ -197,8 +205,12 @@ class TextInput:
         # -------------------------
         # Borda
         # -------------------------
+        if self.error:
+            border_color = (
+                self.erro_border_color
+            )
 
-        if self.active:
+        elif self.active:
             border_color = (
                 self.active_border_color
             )
@@ -432,3 +444,5 @@ class TextInput:
                 best_distance = distance
                 best_index = index
         self.cursor_index = best_index
+        
+        

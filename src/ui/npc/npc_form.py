@@ -114,6 +114,8 @@ class NPCForm:
             "Criar NPC"
         )
         
+        self.validation_message = ""
+        
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_TAB:
@@ -160,6 +162,10 @@ class NPCForm:
                     return "submit"
         
         self.name_input.handle_event(event)
+        if self.name_input.text.strip():
+            self.name_input.error = False
+            self.validation_message = ""
+            
         self.race_input.handle_event(event)
         self.role_input.handle_event(event)
         self.region_input.handle_event(event)
@@ -226,10 +232,10 @@ class NPCForm:
         self._set_focus(0)
         
     def build_npc(self):
-        name = self.name_input.text.strip()
-        
-        if not name:
+        if not self.validate():
             return None
+        
+        name = self.name_input.text.strip()
 
         return NPC(
             name=name,
@@ -273,6 +279,9 @@ class NPCForm:
             )
             
             field.scroll_line = 0
+            
+        self.name_input.error = False
+        self.validation_message = ""
         
     def render(self, screen):
         # -------------------------
@@ -385,6 +394,17 @@ class NPCForm:
         # -------------------------
 
         self.name_input.render(screen)
+        if self.validation_message:
+            error_surface = self.info_font.render(
+                self.validation_message,
+                True,
+                (200, 90, 100)
+            )
+            
+            screen.blit(
+                error_surface,
+                (420, 195)
+            )
         self.race_input.render(screen)
         self.role_input.render(screen)
         self.region_input.render(screen)
@@ -440,3 +460,19 @@ class NPCForm:
             ) % len(self.fields)
             
         self._set_focus(next_index)
+        
+    def validate(self):
+        self.name_input.error = False
+        self.validation_message = ""
+        
+        if not self.name_input.text.strip():
+            self.name_input.error = True
+            
+            self.validation_message = (
+                "O nome do NPC é obrigatório."
+            )
+            
+            return False
+        
+        return True
+    
