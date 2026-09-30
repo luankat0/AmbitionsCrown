@@ -1,6 +1,15 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.models.campaign import CampaignStatus
+
+from src.ui.button import Button
+from src.ui.campaign.campaign_form import CampaignForm
+
+class CampaignViewMode(Enum):
+    LIST = auto()
+    FORM = auto()
 
 class CampaignScreen:
     def __init__(self, app):
@@ -33,9 +42,44 @@ class CampaignScreen:
             .get_all()
         )
         
+        self.view_mode = CampaignViewMode.LIST
+        
+        self.form = CampaignForm()
+        
+        self.new_campaign_button = Button(
+            80,
+            110,
+            190,
+            45,
+            "+ Nova Campanha"
+        )
+        
         self.card_rects = []
         
     def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                if self.view_mode == CampaignViewMode.FORM:
+                    self.cancel_form()
+                    return
+        
+        if self.view_mode == CampaignViewMode.FORM:
+            self.handle_form_events(event)
+        else:
+            self.handle_list_events(event)
+    
+    def handle_list_events(self, event):
+        if self.new_campaign_button.handle_event(
+            event
+        ):
+            self.form.prepare_create()
+            
+            self.view_mode = (
+                CampaignViewMode.FORM
+            )
+            
+            return
+        
         if (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
@@ -54,18 +98,69 @@ class CampaignScreen:
                     
                     return
                 
+    def handle_form_events(self, event):
+        action = self.form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_form()
+            return
+        
+        if action == "submit":
+            self.create_campaign()
+            return
+       
     def update(self):
         pass
+    
+    def create_campaign(self):
+        campaign = (
+            self.form.build_campaign()
+        )
+        
+        if campaign is None:
+            return
+        
+        self.app.campaign_repository.add(
+            campaign
+        )
+        
+        self.campaigns.insert(
+            0,
+            campaign
+        )
+        
+        self.form.clear()
+        
+        self.view_mode = (
+            CampaignViewMode.LIST
+        )
     
     def render(self, screen):
         screen.fill(
             self.background_color
         )
         
+        if self.view_mode == CampaignViewMode.FORM:
+            self.form.render(
+                screen
+            )
+            
+        else:
+            self.render_list(
+                screen
+            )
+    
+    def render_list(self, screen):
         title = self.title_font.render(
             "Campanhas",
             True,
             (240, 240, 245)
+        )
+        
+        self.new_campaign_button.render(
+            screen
         )
         
         screen.blit(
@@ -86,12 +181,12 @@ class CampaignScreen:
             
             screen.blit(
                 empty_text,
-                (80, 140)
+                (80, 190)
             )
             
             return
         
-        y = 140
+        y = 190
         
         for campaign in self.campaigns:
             card_rect = pygame.Rect(
@@ -179,4 +274,11 @@ class CampaignScreen:
         return labels.get(
             status,
             status.value
+        )
+        
+    def cancel_form(self):
+        self.form.clear()
+        
+        self.view_mode = (
+            CampaignViewMode.LIST
         )
