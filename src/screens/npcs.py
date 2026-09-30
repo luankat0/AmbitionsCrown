@@ -174,6 +174,8 @@ class NPCScreen(BaseScreen):
             npc
         )
         
+        self.list_view.scroll_to_top()
+        
         self.form.clear()
 
         self.selected_npc = None
