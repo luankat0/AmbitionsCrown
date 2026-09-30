@@ -1,8 +1,9 @@
 import pygame
 
 from src.models.npc import NPC
-from src.ui.button import Button
 
+from src.ui.button import Button
+from src.ui.text_input import TextInput
 
 class NPCListView:
     def __init__(self):
@@ -41,16 +42,37 @@ class NPCListView:
         self.scroll_offset = 0
         self.max_scroll = 0
         self.scroll_speed = 40
+        
+        self.search_input = TextInput(
+            460,
+            110,
+            360,
+            45,
+            "Buscar NPC..."
+        )
 
     def handle_event(
         self,
         event,
         npcs: list[NPC]
     ):
+        old_query = self.search_input.text
+        
+        self.search_input.handle_event(event)
+        
+        if self.search_input.text != old_query:
+            self.scroll_offset = 0
+            
         if self.new_npc_button.handle_event(event):
             return "create", None
+        
+        filtered_npcs = self._filter_npcs(
+            npcs
+        )
 
-        self._update_scroll_limits(npcs)
+        self._update_scroll_limits(
+            filtered_npcs
+        )
 
         # -------------------------
         # Scroll com roda do mouse
@@ -84,7 +106,9 @@ class NPCListView:
                 ):
                     return None, None
 
-                for index, npc in enumerate(npcs):
+                for index, npc in enumerate(
+                    filtered_npcs
+                ):
                     card_rect = self._get_card_rect(
                         index
                     )
@@ -101,7 +125,13 @@ class NPCListView:
         screen,
         npcs: list[NPC]
     ):
-        self._update_scroll_limits(npcs)
+        filtered_npcs = self._filter_npcs(
+            npcs
+        )
+        
+        self._update_scroll_limits(
+            filtered_npcs
+        )
 
         # -------------------------
         # Título
@@ -119,6 +149,7 @@ class NPCListView:
         )
 
         self.new_npc_button.render(screen)
+        self.search_input.render(screen)
 
         # -------------------------
         # Fundo da lista
@@ -131,9 +162,18 @@ class NPCListView:
             border_radius=8
         )
 
-        if not npcs:
+        if not filtered_npcs:
+            if self.search_input.text.strip():
+                message = (
+                    "Nenhum NPC corresponde à busca."
+                )
+            else:
+                message = (
+                    "Nenhum NPC criado ainda."
+                )
+                
             empty_text = self.info_font.render(
-                "Nenhum NPC criado ainda.",
+                message,
                 True,
                 (150, 150, 160)
             )
@@ -162,7 +202,9 @@ class NPCListView:
         # Cards
         # -------------------------
 
-        for index, npc in enumerate(npcs):
+        for index, npc in enumerate(
+            filtered_npcs
+        ):
             card_rect = self._get_card_rect(
                 index
             )
@@ -360,3 +402,27 @@ class NPCListView:
 
     def scroll_to_top(self):
         self.scroll_offset = 0
+        
+    def _filter_npcs(
+        self,
+        npcs: list[NPC]
+    ):
+        query = self.search_input.text.strip().casefold()
+        
+        if not query:
+            return npcs
+        
+        filtered_npcs: list[NPC] = []
+        
+        for npc in npcs:
+            searchable_text = " ".join([
+                npc.name,
+                npc.race,
+                npc.role,
+                npc.region
+            ]).casefold()
+            
+            if query in searchable_text:
+                filtered_npcs.append(npc)
+        
+        return filtered_npcs
