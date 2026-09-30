@@ -1,4 +1,5 @@
 import pygame
+from enum import Enum, auto
 
 from src.ui.confirm_dialog import ConfirmDialog
 
@@ -7,6 +8,11 @@ from src.ui.npc.npc_list_view import NPCListView
 from src.ui.npc.npc_details_view import NPCDetailsView
 
 from src.screens.base_screen import BaseScreen
+
+class NPCViewMode(Enum):
+    LIST = auto()
+    FORM = auto()
+    DETAILS = auto()
 
 class NPCScreen(BaseScreen):
     def __init__(self, app):
@@ -31,7 +37,8 @@ class NPCScreen(BaseScreen):
         
         self.confirm_dialog = ConfirmDialog()
 
-        self.show_form = False
+        self.view_mode = NPCViewMode.LIST
+        
         self.selected_npc = None
 
         self.repository = self.app.npc_repository
@@ -40,38 +47,20 @@ class NPCScreen(BaseScreen):
         
     def handle_event(self, event):
         if self.confirm_dialog.visible:
-            self.handle_confirm_dialog_events(
-                event
-            )
+            self.handle_confirm_dialog_events(event)
             return
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                
-                # Formulário aberto:
-                # ESC cancela o formulário
-                if self.show_form:
-                    self.form.clear()
-                    self.show_form = False
-                    return
-                
-                # Detalhes de NPC abertos:
-                # ESC volta para a lista
-                if self.selected_npc is not None:
-                    self.selected_npc = None
-                    return
-                
-                # ESC volta ao Dashboard.
-                self.app.change_screen("dashboard")
+                self.handle_escape()
                 return
         
-        # Sidebar e comportamento padrão da tela
         super().handle_event(event)
         
-        if self.show_form:
+        if self.view_mode == NPCViewMode.FORM:
             self.handle_form_events(event)
             
-        elif self.selected_npc is not None:
+        elif self.view_mode == NPCViewMode.DETAILS:
             self.handle_detail_events(event)
         
         else:
@@ -81,8 +70,7 @@ class NPCScreen(BaseScreen):
         action = self.form.handle_event(event)
         
         if action == "cancel":
-            self.form.clear()
-            self.show_form = False
+            self.cancel_form()
             return
         
         if action == "submit":
@@ -99,11 +87,13 @@ class NPCScreen(BaseScreen):
             
             self.form.prepare_create()
         
-            self.show_form = True
+            self.view_mode = NPCViewMode.FORM
             return
         
         if action == "select":
             self.selected_npc = npc
+            self.view_mode = NPCViewMode.DETAILS
+            return
             
     def handle_detail_events(self, event):
         action = self.details_view.handle_event(
@@ -112,6 +102,7 @@ class NPCScreen(BaseScreen):
         
         if action == "back":
             self.selected_npc = None
+            self.view_mode = NPCViewMode.LIST
             return
         
         if action == "edit":
@@ -133,27 +124,43 @@ class NPCScreen(BaseScreen):
         
         if action == "confirm":
             self.delete_selected_npc()
+    
+    def handle_escape(self):
+        if self.view_mode == NPCViewMode.FORM:
+            self.cancel_form()
+            return
+        
+        if self.view_mode == NPCViewMode.DETAILS:
+            self.selected_npc = None
+            self.view_mode = NPCViewMode.LIST
+            return
+        
+        self.app.change_screen(
+            "dashboard"
+        )
         
     def render(self, screen):
         super().render(screen)
 
-        if self.show_form:
+        if self.view_mode == NPCViewMode.FORM:
             self.form.render(screen)
             
-        elif self.selected_npc is not None:
-            self.details_view.render(
-                screen,
-                self.selected_npc
-            )
+        elif self.view_mode == NPCViewMode.DETAILS:
+            npc = self.selected_npc
             
+            if npc is not None:
+                self.details_view.render(
+                    screen,
+                    npc
+                )
+        
         else:
             self.list_view.render(
                 screen,
                 self.npcs
             )
-            
         self.confirm_dialog.render(screen)
-               
+                
     def create_npc(self):
         npc = self.form.build_npc()
         
@@ -168,8 +175,10 @@ class NPCScreen(BaseScreen):
         )
         
         self.form.clear()
-        self.show_form = False
-    
+
+        self.selected_npc = None
+        self.view_mode = NPCViewMode.LIST
+
     def update_npc(self):
         selected_npc = self.selected_npc
         
@@ -193,7 +202,8 @@ class NPCScreen(BaseScreen):
         self.repository.update(selected_npc)
 
         self.form.clear()
-        self.show_form = False
+        
+        self.view_mode = NPCViewMode.DETAILS
     
     def delete_selected_npc(self):
         npc = self.selected_npc
@@ -211,6 +221,8 @@ class NPCScreen(BaseScreen):
         
         self.selected_npc = None
         self.confirm_dialog.close()
+        
+        self.view_mode = NPCViewMode.LIST
      
     def open_edit_form(self):
         npc = self.selected_npc
@@ -220,7 +232,7 @@ class NPCScreen(BaseScreen):
         
         self.form.load_npc(npc)
         
-        self.show_form = True
+        self.view_mode = NPCViewMode.FORM
       
     def submit_form(self):
         if self.form.mode == "create":
@@ -228,7 +240,17 @@ class NPCScreen(BaseScreen):
             
         elif self.form.mode == "edit":
             self.update_npc()
-             
+          
+    def cancel_form(self):
+        if self.form.mode == "edit":
+            self.view_mode = NPCViewMode.DETAILS
+        
+        else:
+            self.selected_npc = None
+            self.view_mode = NPCViewMode.LIST
+            
+        self.form.clear()
+       
     def open_delete_confirmation(self):
         npc = self.selected_npc
         
