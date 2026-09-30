@@ -38,6 +38,26 @@ class Database:
             """
         )
         
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS campaigns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                name TEXT NOT NULL,
+
+                description TEXT NOT NULL DEFAULT '',
+                notes TEXT NOT NULL DEFAULT '',
+
+                status TEXT NOT NULL DEFAULT 'planning',
+
+                world_id INTEGER,
+
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        
         self.connection.commit()
         
     def close(self):
