@@ -2,7 +2,10 @@ import pygame
 
 from src.core.database import Database
 
+from src.models.campaign import Campaign
+
 from src.repositories.npc_repository import NPCRepository
+from src.repositories.campaign_repository import CampaignRepository
 
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
@@ -17,6 +20,12 @@ class App:
         self.npc_repository = NPCRepository(
             self.database
         )
+        
+        self.campaign_repository = CampaignRepository(
+            self.database
+        )
+        
+        self.current_campaign: Campaign | None = None
 
         self.width = 1280
         self.height = 720
@@ -65,3 +74,14 @@ class App:
         self.database.close()
         
         pygame.quit()
+        
+    def select_campaign(
+        self,
+        campaign: Campaign
+    ):
+        self.current_campaign = campaign
+        
+    def close_campaign(self):
+        self.current_campaign = None
+        
+    
