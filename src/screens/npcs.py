@@ -1,12 +1,9 @@
 import pygame
 
 from src.models.npc import NPC
-
-from src.screens.base_screen import BaseScreen
-
 from src.ui.button import Button
-from src.ui.text_input import TextInput
-from src.ui.text_area import TextArea
+from src.ui.npc.npc_form import NPCForm
+from src.screens.base_screen import BaseScreen
 
 class NPCScreen(BaseScreen):
     def __init__(self, app):
@@ -24,6 +21,8 @@ class NPCScreen(BaseScreen):
             None,
             26
         )
+        
+        self.form = NPCForm()
 
         self.new_npc_button = Button(
             280,
@@ -35,9 +34,7 @@ class NPCScreen(BaseScreen):
 
         self.show_form = False
         self.selected_npc = None
-        
-        self.form_mode = "create"
-        
+                
         self.npc_rects = {}
         
         self.back_button = Button(
@@ -60,78 +57,66 @@ class NPCScreen(BaseScreen):
         
         self.npcs = self.repository.get_all()
         
-        self.name_input = TextInput(
-            420,
-            150,
-            280,
-            42,
-            "Nome do NPC"
-        )
-
-        self.race_input = TextInput(
-            420,
-            220,
-            280,
-            42,
-            "Raça"
-        )
-
-        self.role_input = TextInput(
-            420,
-            290,
-            280,
-            42,
-            "Profissão ou função"
-        )
-
-        self.region_input = TextInput(
-            420,
-            360,
-            280,
-            42,
-            "Região"
-        )
-        self.description_input = TextArea(
-            800,
-            150,
-            380,
+        self.show_delete_confirmation = False
+        
+        self.delete_button = Button(
+            560,
             110,
-            "Aparência, histórico ou descrição geral..."
-        )
-
-        self.personality_input = TextArea(
-            800,
-            300,
-            380,
-            110,
-            "Personalidade, comportamento, manias..."
-        )
-
-        self.notes_input = TextArea(
-            800,
-            450,
-            380,
-            110,
-            "Anotações privadas do Mestre..."
+            120,
+            45,
+            "Excluir"
         )
         
-        self.cancel_button = Button(
-            800,
-            590,
-            140,
-            45,
+        self.delete_cancel_button = Button(
+            500, 
+            400, 
+            140, 
+            45, 
             "Cancelar"
         )
         
-        self.create_button = Button(
-            960,
-            590,
-            160,
+        self.delete_confirm_button = Button(
+            660,
+            400,
+            140,
             45,
-            "Criar NPC"
+            "Excluir"
         )
         
     def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                
+                # Modal de exclusão aberto
+                # ESC apenas fecha o modal
+                if self.show_delete_confirmation:
+                    self.show_delete_confirmation = False
+                    return
+                
+                # Formulário aberto:
+                # ESC cancela o formulário
+                if self.show_form:
+                    self.form.clear()
+                    self.show_form = False
+                    return
+                
+                # Detalhes de NPC abertos:
+                # ESC volta para a lista
+                if self.selected_npc is not None:
+                    self.selected_npc = None
+                    return
+                
+                # ESC volta ao Dashboard.
+                self.app.change_screen("dashboard")
+                return
+        
+        # Se o modal estiver aberto,
+        # nenhum outro componente recebe eventos
+        if self.show_delete_confirmation:
+            self.handle_delete_confirmation_events(event)
+            return
+        
+        # Sidebar e comportamento padrão da tela
         super().handle_event(event)
         
         if self.show_form:
@@ -143,51 +128,25 @@ class NPCScreen(BaseScreen):
         else:
             self.handle_list_events(event)
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                
-                if self.show_form:
-                    self.clear_form()
-                    
-                    self.show_form = False
-                    self.form_mode = "create"
-                    
-                elif self.selected_npc is not None:
-                    self.selected_npc = None
-                    
-                else:
-                    self.app.change_screen("dashboard")
-
     def handle_form_events(self, event):
-        self.name_input.handle_event(event)
-        self.race_input.handle_event(event)
-        self.role_input.handle_event(event)
-        self.region_input.handle_event(event)
+        action = self.form.handle_event(event)
         
-        self.description_input.handle_event(event)
-        self.personality_input.handle_event(event)
-        self.notes_input.handle_event(event)
-        
-        if self.cancel_button.handle_event(event):
-            self.clear_form()
-            
+        if action == "cancel":
+            self.form.clear()
             self.show_form = False
-            self.form_mode = "create"
+            return
         
-        if self.create_button.handle_event(event):
+        if action == "submit":
             self.submit_form()
     
     def handle_list_events(self, event):
-        if self.new_npc_button.handle_event(event):
-            self.form_mode = "create"
-            
+        if self.new_npc_button.handle_event(event):            
             self.selected_npc = None
             
-            self.clear_form()
-            
-            self.create_button.text = "Criar NPC"
-            
+            self.form.prepare_create()
+                        
             self.show_form = True
+            return
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -204,126 +163,40 @@ class NPCScreen(BaseScreen):
     
     def handle_detail_events(self, event):
         if self.back_button.handle_event(event):
+            self.show_delete_confirmation = False
             self.selected_npc = None
             return
 
         if self.edit_button.handle_event(event):
             self.open_edit_form()
+            return
+            
+        if self.delete_button.handle_event(event):
+            self.show_delete_confirmation = True
+            return
+        
+    def handle_delete_confirmation_events(self, event):
+        if self.delete_cancel_button.handle_event(event):
+            self.show_delete_confirmation = False
+            return
+        
+        if self.delete_confirm_button.handle_event(event):
+            self.delete_selected_npc()
         
     def render(self, screen):
         super().render(screen)
 
         if self.show_form:
-            self.render_form(screen)
+            self.form.render(screen)
             
         elif self.selected_npc is not None:
             self.render_npc_details(screen)
             
         else:
             self.render_npc_list(screen)
-        
-    def render_form(self, screen):
-        if self.form_mode == "edit":
-            title_text = "Editar NPC"
-        else:
-            title_text = "Criar NPC"
-        
-        title = self.title_font.render(
-            title_text,
-            True,
-            (240, 240, 240)
-        )
-
-        screen.blit(
-            title,
-            (280, 40)
-        )
-
-        basic_title = self.info_font.render(
-            "Informações básicas",
-            True,
-            (180, 180, 200)
-        )
-
-        screen.blit(
-            basic_title,
-            (300, 105)
-        )
-
-        characterization_title = self.info_font.render(
-            "Caracterização",
-            True,
-            (180, 180, 200)
-        )
-
-        screen.blit(
-            characterization_title,
-            (800, 105)
-        )
-
-        basic_labels = [
-            ("Nome", 150),
-            ("Raça", 220),
-            ("Função", 290),
-            ("Região", 360),
-        ]
-
-        for label, y in basic_labels:
-            label_surface = self.info_font.render(
-                label,
-                True,
-                (200, 200, 210)
-            )
-
-            screen.blit(
-                label_surface,
-                (300, y + 10)
-            )
-
-        description_label = self.info_font.render(
-            "Descrição",
-            True,
-            (200, 200, 210)
-        )
-
-        personality_label = self.info_font.render(
-            "Personalidade",
-            True,
-            (200, 200, 210)
-        )
-
-        notes_label = self.info_font.render(
-            "Observações",
-            True,
-            (200, 200, 210)
-        )
-
-        screen.blit(
-            description_label,
-            (800, 125)
-        )
-
-        screen.blit(
-            personality_label,
-            (800, 275)
-        )
-
-        screen.blit(
-            notes_label,
-            (800, 425)
-        )
-
-        self.name_input.render(screen)
-        self.race_input.render(screen)
-        self.role_input.render(screen)
-        self.region_input.render(screen)
-
-        self.description_input.render(screen)
-        self.personality_input.render(screen)
-        self.notes_input.render(screen)
-
-        self.cancel_button.render(screen)
-        self.create_button.render(screen)
+            
+        if self.show_delete_confirmation:
+            self.render_delete_confirmation(screen)
         
     def render_npc_list(self, screen):
         title = self.title_font.render(
@@ -432,6 +305,7 @@ class NPCScreen(BaseScreen):
         
         self.back_button.render(screen)
         self.edit_button.render(screen)
+        self.delete_button.render(screen)
         
         info_x = 300
         info_y = 190
@@ -526,20 +400,94 @@ class NPCScreen(BaseScreen):
             )
             
             info_y += 40
-            
-    def create_npc(self):
-        if not self.name_input.text.strip():
+    
+    def render_delete_confirmation(self, screen):
+        npc = self.selected_npc
+        
+        if npc is None:
             return
         
-        npc = NPC(
-            name=self.name_input.text.strip(),
-            race=self.race_input.text.strip(),
-            role=self.role_input.text.strip(),
-            region=self.region_input.text.strip(),
-            description=self.description_input.text.strip(),
-            personality=self.personality_input.text.strip(),
-            notes=self.notes_input.text.strip()
+        overlay = pygame.Surface(
+            screen.get_size(),
+            pygame.SRCALPHA
         )
+        
+        overlay.fill(
+            (0, 0, 0, 150)
+        )
+        
+        screen.blit(
+            overlay,
+            (0, 0)
+        )
+        
+        modal_rect = pygame.Rect(
+            420,
+            250,
+            480,
+            240
+        )
+        
+        pygame.draw.rect(
+            screen,
+            (36, 36, 44),
+            modal_rect,
+            border_radius=10
+        )
+        
+        pygame.draw.rect(
+            screen,
+            (90, 90, 105),
+            modal_rect,
+            width=2,
+            border_radius=10
+        )
+        
+        title = self.title_font.render(
+            "Excluir NPC?",
+            True,
+            (240, 240, 240)
+        )
+        
+        screen.blit(
+            title,
+            (modal_rect.x + 30, modal_rect.y + 25)
+        )
+        
+        message = (
+            f"Tem certeza que deseja excluir {npc.name}?"
+        )
+        
+        message_surface = self.info_font.render(
+            message,
+            True,
+            (210, 210, 220)
+        )
+        
+        screen.blit(
+            message_surface,
+            (modal_rect.x + 30, modal_rect.y + 90)
+        )
+        
+        warning_surface = self.info_font.render(
+            "Esta ação não poderá ser desfeita.",
+            True,
+            (170, 170, 180)
+        )
+        
+        screen.blit(
+            warning_surface,
+            (modal_rect.x + 30, modal_rect.y + 125)
+        )
+        
+        self.delete_cancel_button.render(screen)
+        self.delete_confirm_button.render(screen)
+            
+    def create_npc(self):
+        npc = self.form.build_npc()
+        
+        if npc is None:
+            return
         
         self.repository.add(npc)
         
@@ -548,82 +496,66 @@ class NPCScreen(BaseScreen):
             npc
         )
         
-        self.clear_form()
-        
+        self.form.clear()
         self.show_form = False
     
     def update_npc(self):
+        selected_npc = self.selected_npc
+        
+        if selected_npc is None:
+            return
+        
+        form_npc = self.form.build_npc()
+        
+        if form_npc is None:
+            return
+        
+        selected_npc.name = form_npc.name
+        selected_npc.race = form_npc.race
+        selected_npc.role = form_npc.role
+        selected_npc.region = form_npc.region
+
+        selected_npc.description = form_npc.description
+        selected_npc.personality = form_npc.personality
+        selected_npc.notes = form_npc.notes
+
+        self.repository.update(selected_npc)
+
+        self.form.clear()
+        self.show_form = False
+    
+    def delete_selected_npc(self):
         npc = self.selected_npc
         
         if npc is None:
             return
         
-        name = self.name_input.text.strip()
+        self.repository.delete(npc)
         
-        if not name:
-            return
+        self.npcs = [
+            item
+            for item in self.npcs
+            if item.id != npc.id
+        ]
         
-        npc.name = name
-        npc.race = self.race_input.text.strip()
-        npc.role = self.role_input.text.strip()
-        npc.region = self.region_input.text.strip()
-
-        npc.description = (
-            self.description_input.text.strip()
-        )
-
-        npc.personality = (
-            self.personality_input.text.strip()
-        )
-
-        npc.notes = (
-            self.notes_input.text.strip()
-        )
-
-        self.repository.update(npc)
-
-        self.clear_form()
-
-        self.show_form = False
-        self.form_mode = "create"
-    
+        self.selected_npc = None
+        self.show_delete_confirmation = False
+     
     def open_edit_form(self):
         npc = self.selected_npc
         
         if npc is None:
             return
         
-        self.form_mode = "edit"
+        self.form.load_npc(npc)
         
-        self.name_input.text = npc.name
-        self.race_input.text = npc.race
-        self.role_input.text = npc.role
-        self.region_input.text = npc.region
-
-        self.description_input.text = npc.description
-        self.personality_input.text = npc.personality
-        self.notes_input.text = npc.notes
-
-        self.create_button.text = "Salvar"
-
         self.show_form = True
-        
-    def clear_form(self):
-        
-        self.name_input.text = ""
-        self.race_input.text = ""
-        self.role_input.text = ""
-        self.region_input.text = ""
-        
-        self.description_input.text = ""
-        self.personality_input.text = ""
-        self.notes_input.text = ""
       
     def submit_form(self):
-        if self.form_mode == "create":
+        if self.form.mode == "create":
             self.create_npc()
             
-        elif self.form_mode == "edit":
+        elif self.form.mode == "edit":
             self.update_npc()
              
     def draw_wrapped_text(

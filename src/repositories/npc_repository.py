@@ -114,3 +114,21 @@ class NPCRepository:
         self.database.connection.commit()
 
         return npc
+    
+    def delete(self, npc):
+        if npc.id is None:
+            raise ValueError(
+                "Não é possível excluir um NPC sem ID."
+            )
+        
+        cursor = self.database.connection.cursor()
+        
+        cursor.execute(
+            """
+            DELETE FROM npcs
+            WHERE id = ?
+            """,
+            (npc.id,)
+        )
+        
+        self.database.connection.commit()
