@@ -11,6 +11,7 @@ from src.repositories.world_repository import WorldRepository
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
 from src.screens.campaigns import CampaignScreen
+from src.screens.worlds import WorldScreen
 
 class App:
     def __init__(self):
@@ -62,6 +63,11 @@ class App:
     
         elif screen_name == "npcs":
             self.current_screen = NPCScreen(
+                self
+            )
+        
+        elif screen_name == "world":
+            self.current_screen = WorldScreen(
                 self
             )
 

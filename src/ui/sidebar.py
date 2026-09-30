@@ -35,7 +35,8 @@ class Sidebar:
 
         self.menu_items = [
             ("Dashboard", "dashboard"),
-            ("NPCs", "npcs")
+            ("Mundo", "world"),
+            ("NPCs", "npcs"),
         ]
 
         self.menu_rects = {}
