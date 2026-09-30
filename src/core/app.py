@@ -6,6 +6,7 @@ from src.models.campaign import Campaign
 
 from src.repositories.npc_repository import NPCRepository
 from src.repositories.campaign_repository import CampaignRepository
+from src.repositories.world_repository import WorldRepository
 
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
@@ -23,6 +24,10 @@ class App:
         )
         
         self.campaign_repository = CampaignRepository(
+            self.database
+        )
+        
+        self.world_repository = WorldRepository(
             self.database
         )
         

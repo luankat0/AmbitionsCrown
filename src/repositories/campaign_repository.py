@@ -75,3 +75,37 @@ class CampaignRepository:
             )
             
         return campaigns
+    
+    def update(self, campaign):
+        if campaign.id is None:
+            raise ValueError(
+                "Não é possível atualizar uma campanha sem ID."
+            )
+            
+        cursor = self.database.connection.cursor()
+        
+        cursor.execute(
+            """
+            UPDATE campaigns
+            SET
+                name = ?,
+                description = ?,
+                notes = ?,
+                status = ?,
+                world_id = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                campaign.name,
+                campaign.description,
+                campaign.notes,
+                campaign.status.value,
+                campaign.world_id,
+                campaign.id
+            )
+        )
+        
+        self.database.connection.commit()
+
+        return campaign
