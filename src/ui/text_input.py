@@ -445,4 +445,10 @@ class TextInput:
                 best_index = index
         self.cursor_index = best_index
         
+    def clear(self):
+        self.text = ""
+        self.cursor_index = 0
+        self.scroll_x = 0
+        self.active = False
+        self.error = False
         

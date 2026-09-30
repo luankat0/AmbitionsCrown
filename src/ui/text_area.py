@@ -844,3 +844,10 @@ class TextArea:
                 mouse_x
             )
         )
+        
+    def clear(self):
+        self.text = ""
+        self.cursor_index = 0
+        self.scroll_line = 0
+        self.active = False
+        
