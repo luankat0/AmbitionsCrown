@@ -1,8 +1,16 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.ui.button import Button
+from src.ui.world.world_form import WorldForm
 
 from src.screens.base_screen import BaseScreen
+
+class WorldViewMode(Enum):
+    CURRENT = auto()
+    SELECT = auto()
+    FORM = auto()
 
 class WorldScreen(BaseScreen):
     def __init__(self, app):
@@ -38,7 +46,17 @@ class WorldScreen(BaseScreen):
             .get_all()
         )
         
-        self.world_card_rects = {}
+        self.form = WorldForm()
+        
+        self.new_world_button = Button(
+            300,
+            170,
+            180,
+            45,
+            "+ Novo Mundo"
+        )
+        
+        self.world_card_rects = []
         
         self.change_world_button = Button(
             300,
@@ -48,7 +66,19 @@ class WorldScreen(BaseScreen):
             "Trocar Mundo"
         )
         
-        self.selecting_world = False
+        campaign = self.app.current_campaign
+
+        if (
+            campaign is not None
+            and campaign.world_id is not None
+        ):
+            self.view_mode = (
+                WorldViewMode.CURRENT
+            )
+        else:
+            self.view_mode = (
+                WorldViewMode.SELECT
+            )
         
     def handle_event(self, event):
         super().handle_event(event)
@@ -59,30 +89,66 @@ class WorldScreen(BaseScreen):
             return
         
         if (
-            campaign.world_id is not None
-            and not self.selecting_world
-        ):
-            if self.change_world_button.handle_event(
-                event
-            ):
-                self.selecting_world = True
-            
-            return
-        
-        if (
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
-            if campaign.world_id is not None:
-                self.selecting_world = False
+            if self.view_mode == WorldViewMode.FORM:
+                self.cancel_form()
+                return
+        
+            if self.view_mode == WorldViewMode.SELECT:
+                if campaign.world_id is not None:
+                    self.view_mode = (
+                        WorldViewMode.CURRENT
+                    )
+                    
+                return
+            
+        if self.view_mode == WorldViewMode.FORM:
+            self.handle_form_events(
+                event
+            )
+            
+        elif self.view_mode == WorldViewMode.SELECT:
+            self.handle_selection_events(
+                event
+            )
+            
+        else:
+            self.handle_current_events(
+                event
+            )
                 
+    def handle_current_events(self, event):            
+        if self.change_world_button.handle_event(
+            event
+        ):
+            self.view_mode = (
+                WorldViewMode.SELECT
+            )
+            
+    def handle_selection_events(
+        self,
+        event
+    ):
+        if self.new_world_button.handle_event(
+            event
+        ):
+            self.form.prepare_create()
+            
+            self.view_mode = (
+                WorldViewMode.FORM
+            )
+            
             return
         
         if (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
         ):
-            for world, rect in self.world_card_rects:
+            for world, rect in (
+                self.world_card_rects
+            ):
                 if rect.collidepoint(
                     event.pos
                 ):
@@ -91,6 +157,50 @@ class WorldScreen(BaseScreen):
                     )
                     
                     return
+                
+    def handle_form_events(
+        self,
+        event
+    ):
+        action = self.form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_form()
+            return
+        
+        if action == "submit":
+            self.create_world()
+            return
+        
+    def cancel_form(self):
+        self.form.clear()
+        
+        self.view_mode = (
+            WorldViewMode.SELECT
+        )
+        
+    def create_world(self):
+        world = self.form.build_world()
+        
+        if world is None:
+            return
+        
+        self.app.world_repository.add(
+            world
+        )
+        
+        self.worlds.insert(
+            0,
+            world
+        )
+        
+        self.form.clear()
+        
+        self.select_world(
+            world
+        )
     
     def update(self):
         pass
@@ -105,26 +215,18 @@ class WorldScreen(BaseScreen):
         if campaign is None:
             return
         
-        title = self.title_font.render(
-            "Mundo",
-            True,
-            (240, 240, 245)
-        )
-        
-        screen.blit(
-            title,
-            (300, 50)
-        )
-        
-        if (
-            campaign.world_id is not None
-            and not self.selecting_world
-        ):
-            self.render_current_world(
+        if self.view_mode == WorldViewMode.FORM:
+            self.form.render(
                 screen
             )
-        else:
+        
+        elif self.view_mode == WorldViewMode.SELECT:
             self.render_world_selection(
+                screen
+            )
+            
+        else:
+            self.render_current_world(
                 screen
             )
             
@@ -206,6 +308,10 @@ class WorldScreen(BaseScreen):
             )
         )
         
+        self.new_world_button.render(
+            screen
+        )
+        
         screen.blit(
             info_surface,
             (300, 120)
@@ -224,12 +330,12 @@ class WorldScreen(BaseScreen):
             
             screen.blit(
                 empty_surface,
-                (300, 180)
+                (300, 240)
             )
             
             return
         
-        y = 180
+        y = 240
         
         for world in self.worlds:
             card_rect = pygame.Rect(
@@ -309,5 +415,7 @@ class WorldScreen(BaseScreen):
             campaign
         )
         
-        self.selecting_world = False
+        self.view_mode = (
+            WorldViewMode.CURRENT
+        )        
         

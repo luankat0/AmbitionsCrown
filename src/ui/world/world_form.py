@@ -325,3 +325,4 @@ class WorldForm:
         self.submit_button.render(
             screen
         )
+
