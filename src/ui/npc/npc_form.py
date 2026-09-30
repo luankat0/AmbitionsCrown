@@ -248,39 +248,9 @@ class NPCForm:
         )
         
     def clear(self):
-        self.name_input.text = ""
-        self.race_input.text = ""
-        self.role_input.text = ""
-        self.region_input.text = ""
-
-        self.description_input.text = ""
-        self.personality_input.text = ""
-        self.notes_input.text = ""
-        
         for field in self.fields:
-            field.active = False
-        
-        for field in [
-            self.name_input,
-            self.race_input,
-            self.role_input,
-            self.region_input,
-        ]:
-            field.cursor_index = 0
-            field.scroll_x = 0
+            field.clear()
             
-        for field in [
-            self.description_input,
-            self.personality_input,
-            self.notes_input,
-        ]:
-            field.cursor_index = len(
-                field.text
-            )
-            
-            field.scroll_line = 0
-            
-        self.name_input.error = False
         self.validation_message = ""
         
     def render(self, screen):

@@ -225,24 +225,9 @@ class WorldForm:
         self._set_focus(0)
         
     def clear(self):
-        self.name_input.text = ""
-        self.description_input.text = ""
-        self.notes_input.text = ""
-
-        self.name_input.cursor_index = 0
-        self.name_input.scroll_x = 0
-
-        for field in [
-            self.description_input,
-            self.notes_input,
-        ]:
-            field.cursor_index = 0
-            field.scroll_line = 0
-
         for field in self.fields:
-            field.active = False
-
-        self.name_input.error = False
+            field.clear()
+        
         self.validation_message = ""
         
     def render(self, screen):
