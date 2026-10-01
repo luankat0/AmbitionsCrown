@@ -1,3 +1,5 @@
+import pygame
+
 from src.ui.text_area import TextArea
 
 class BaseForm:
@@ -60,3 +62,51 @@ class BaseForm:
         self._set_focus(
             next_index
         )
+        
+    def handle_navigation_event(self, event):
+        if event.type != pygame.KEYDOWN:
+            return False, None
+        
+        if event.key == pygame.K_TAB:
+            shift_pressed = bool(
+                event.mod & pygame.KMOD_SHIFT
+            )
+            
+            if shift_pressed:
+                self._move_focus(-1)
+            else:
+                self._move_focus(1)
+            
+            return True, None
+        
+        if event.key in (
+            pygame.K_RETURN,
+            pygame.K_KP_ENTER
+        ):
+            shift_pressed = bool(
+                event.mod & pygame.KMOD_SHIFT
+            )
+            
+            active_index = (
+                self._get_active_index()
+            )
+            
+            active_field = None
+            
+            if active_index is not None:
+                active_field = self.fields[
+                    active_index
+                ]
+                
+            if (
+                shift_pressed
+                and isinstance(
+                    active_field,
+                    TextArea
+                )
+            ):
+                return False, None
+            
+            return True, "submit"
+        
+        return False, None

@@ -68,58 +68,18 @@ class WorldForm(BaseForm):
         ]
                
     def handle_event(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_TAB:
-                shift_pressed = bool(
-                    event.mod
-                    & pygame.KMOD_SHIFT
-                )
-                
-                if shift_pressed:
-                    self._move_focus(-1)
-                else:
-                    self._move_focus(1)
-                    
-                return None
-            
-            if event.key in (
-                pygame.K_RETURN,
-                pygame.K_KP_ENTER
-            ):
-                shift_pressed = bool(
-                    event.mod
-                    & pygame.KMOD_SHIFT
-                )
-                
-                active_index = (
-                    self._get_active_index()
-                )
-                
-                active_field = None
-                
-                if active_index is not None:
-                    active_field = (
-                        self.fields[
-                            active_index
-                        ]
-                    )
-                
-                if (
-                    shift_pressed
-                    and isinstance(
-                        active_field,
-                        TextArea
-                    )
-                ):
-                    pass
-                
-                else:
-                    return "submit"
-                
+        handled, action = (
+            self.handle_navigation_event(
+                event
+            )
+        )
+        
+        if handled:
+            return action
+        
         self.name_input.handle_event(
             event
         )
-        
         self.description_input.handle_event(
             event
         )
@@ -131,7 +91,7 @@ class WorldForm(BaseForm):
         if self.name_input.text.strip():
             self.name_input.error = False
             self.validation_message = ""
-            
+
         if self.cancel_button.handle_event(
             event
         ):
@@ -143,7 +103,7 @@ class WorldForm(BaseForm):
             return "submit"
         
         return None
-    
+
     def validate(self):
         self.name_input.error = False
         self.validation_message = ""
