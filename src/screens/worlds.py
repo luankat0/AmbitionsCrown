@@ -7,6 +7,7 @@ from src.models.region import RegionType
 from src.ui.button import Button
 from src.ui.world.world_form import WorldForm
 from src.ui.region.region_form import RegionForm
+from src.ui.region.region_details_view import RegionDetailsView
 
 from src.screens.base_screen import BaseScreen
 
@@ -56,6 +57,10 @@ class WorldScreen(BaseScreen):
         self.region_card_rects = []
         self.region_form = RegionForm()
         
+        self.region_details_view = (
+            RegionDetailsView()
+        )
+        
         self.form = WorldForm()
         
         self.new_region_button = Button(
@@ -64,14 +69,6 @@ class WorldScreen(BaseScreen):
             180,
             45,
             "+ Nova Região"
-        )
-        
-        self.back_region_button = Button(
-            300,
-            120,
-            140,
-            45,
-            "← Voltar"
         )
         
         self.new_world_button = Button(
@@ -302,10 +299,16 @@ class WorldScreen(BaseScreen):
                 screen
             )
             
-        elif self.view_mode == WorldViewMode.REGION_DETAILS:
-            self.render_region_details(
-                screen
-            )
+        elif (
+            self.view_mode == WorldViewMode.REGION_DETAILS
+        ):
+            region = self.selected_region
+            
+            if region is not None:
+                self.region_details_view.render(
+                    screen,
+                    region
+                )
         
         elif self.view_mode == WorldViewMode.SELECT:
             self.render_world_selection(
@@ -739,9 +742,14 @@ class WorldScreen(BaseScreen):
         self,
         event
     ):
-        if self.back_region_button.handle_event(
-            event
-        ):
+        action = (
+            self.region_details_view
+            .handle_event(
+                event
+            )
+        )
+        
+        if action == "back":
             self.close_region()
             return
     
@@ -750,98 +758,4 @@ class WorldScreen(BaseScreen):
         
         self.view_mode = (
             WorldViewMode.CURRENT
-        )
-
-    def render_region_details(
-        self,
-        screen
-    ):
-        region = self.selected_region
-        
-        if region is None:
-            return
-        
-        self.back_region_button.render(
-            screen
-        )
-        
-        name_surface = (
-            self.name_font.render(
-                region.name,
-                True,
-                (235, 235, 240)
-            )
-        )
-        
-        screen.blit(
-            name_surface,
-            (300, 200)
-        )
-        
-        type_text = (
-            self._get_region_type_label(
-                region.region_type
-            )
-        )
-        
-        type_surface = (
-            self.info_font.render(
-                type_text,
-                True,
-                (160, 160, 175)
-            )
-        )
-        
-        screen.blit(
-            type_surface,
-            (300, 250)
-        )
-        
-        description = (
-            region.description.strip()
-        )
-        
-        if not description:
-            description = (
-                "Sem descrição"
-            )
-            
-        description_surface = (
-            self.info_font.render(
-                description,
-                True,
-                (190, 190, 200)
-            )
-        )
-        
-        screen.blit(
-            description_surface,
-            (300, 310)
-        )
-        
-        locations_title = (
-            self.name_font.render(
-                "Locais",
-                True,
-                (235, 235, 240)
-            )
-        )
-        
-        screen.blit(
-            locations_title,
-            (300, 400)
-        )
-        
-        placeholder = (
-            self.info_font.render(
-                "Os locais desta região aparecerão aqui.",
-                True,
-                (150, 150, 160)
-            )
-        )
-        
-        screen.blit(
-            placeholder,
-            (300, 455)
-        )
-        
+        )    
