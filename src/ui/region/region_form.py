@@ -7,6 +7,10 @@ from src.ui.button import Button
 from src.ui.text_area import TextArea
 from src.ui.text_input import TextInput
 
+from src.ui.region.region_labels import (
+    get_region_type_label
+)
+
 class RegionForm(BaseForm):
     def __init__(self):
         super().__init__()
@@ -90,45 +94,10 @@ class RegionForm(BaseForm):
         return self.region_types[
             self.region_type_index
         ]
-        
-    def _get_region_type_label(
-        self,
-        region_type: RegionType
-    ):
-        labels = {
-            RegionType.KINGDOM:
-                "Reino",
-
-            RegionType.PROVINCE:
-                "Província",
-
-            RegionType.TERRITORY:
-                "Território",
-
-            RegionType.FOREST:
-                "Floresta",
-
-            RegionType.DESERT:
-                "Deserto",
-
-            RegionType.MOUNTAINS:
-                "Montanhas",
-
-            RegionType.ISLAND:
-                "Ilha",
-
-            RegionType.OTHER:
-                "Outro",
-        }
-
-        return labels.get(
-            region_type,
-            region_type.value
-        )
-        
+             
     def _update_type_button(self):
         self.type_button.text = (
-            self._get_region_type_label(
+            get_region_type_label(
                 self.selected_region_type
             )
         )

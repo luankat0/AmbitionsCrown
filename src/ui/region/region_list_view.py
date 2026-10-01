@@ -1,7 +1,10 @@
 import pygame
 
-from src.models.region import RegionType
 from src.ui.button import Button
+
+from src.ui.region.region_labels import (
+    get_region_type_label
+)
 
 class RegionListView:
     def __init__(self):
@@ -141,7 +144,7 @@ class RegionListView:
         )
         
         type_text = (
-            self._get_region_type_label(
+            get_region_type_label(
                 region.region_type
             )
         )
@@ -162,37 +165,3 @@ class RegionListView:
             )
         )
         
-    def _get_region_type_label(
-        self,
-        region_type: RegionType
-    ):
-        labels = {
-            RegionType.KINGDOM:
-            "Reino",
-
-            RegionType.PROVINCE:
-                "Província",
-
-            RegionType.TERRITORY:
-                "Território",
-
-            RegionType.FOREST:
-                "Floresta",
-
-            RegionType.DESERT:
-                "Deserto",
-
-            RegionType.MOUNTAINS:
-                "Montanhas",
-
-            RegionType.ISLAND:
-                "Ilha",
-
-            RegionType.OTHER:
-                "Outro",
-        }
-
-        return labels.get(
-            region_type,
-            region_type.value
-        )
