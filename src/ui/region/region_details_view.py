@@ -30,6 +30,14 @@ class RegionDetailsView:
             "← Voltar"
         )
         
+        self.new_location_button = Button(
+            720,
+            520,
+            180,
+            45,
+            "+ Novo Local"
+        )
+        
         self.location_tree_view = (
             LocationTreeView()
         )
@@ -42,6 +50,11 @@ class RegionDetailsView:
             event
         ):
             return "back"
+        
+        if self.new_location_button.handle_event(
+            event
+        ):
+            return "new_location"
         
         return None
     
@@ -187,6 +200,10 @@ class RegionDetailsView:
                 True,
                 (235, 235, 240)
             )
+        )
+        
+        self.new_location_button.render(
+            screen
         )
         
         screen.blit(
