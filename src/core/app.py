@@ -14,6 +14,7 @@ from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
 from src.screens.campaigns import CampaignScreen
 from src.screens.worlds import WorldScreen
+from src.screens.regions import RegionScreen
 
 class App:
     def __init__(self):
@@ -122,4 +123,13 @@ class App:
         
         self.change_screen(
             "campaigns"
+        )
+        
+    def open_region(
+        self,
+        region
+    ):
+        self.current_screen = RegionScreen(
+            self,
+            region
         )

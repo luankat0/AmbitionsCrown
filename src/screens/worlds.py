@@ -7,7 +7,6 @@ from src.ui.button import Button
 from src.ui.world.world_form import WorldForm
 from src.ui.region.region_form import RegionForm
 
-from src.ui.region.region_details_view import RegionDetailsView
 from src.ui.region.region_list_view import RegionListView
 
 from src.screens.base_screen import BaseScreen
@@ -17,7 +16,6 @@ class WorldViewMode(Enum):
     SELECT = auto()
     FORM = auto()
     REGION_FORM = auto()
-    REGION_DETAILS = auto()
 
 class WorldScreen(BaseScreen):
     def __init__(self, app):
@@ -54,18 +52,11 @@ class WorldScreen(BaseScreen):
         )
         
         self.regions = []
-        self.selected_region = None
-        
-        self.locations = []
         
         self.region_form = RegionForm()
         
         self.region_list_view = (
             RegionListView()
-        )
-        
-        self.region_details_view = (
-            RegionDetailsView()
         )
         
         self.form = WorldForm()
@@ -123,10 +114,6 @@ class WorldScreen(BaseScreen):
             if self.view_mode == WorldViewMode.REGION_FORM:
                 self.cancel_region_form()
                 return
-            
-            if self.view_mode == WorldViewMode.REGION_DETAILS:
-                self.close_region()
-                return
         
             if self.view_mode == WorldViewMode.SELECT:
                 if campaign.world_id is not None:
@@ -143,14 +130,6 @@ class WorldScreen(BaseScreen):
             
         elif self.view_mode == WorldViewMode.REGION_FORM:
             self.handle_region_form_events(
-                event
-            )
-            
-        elif (
-            self.view_mode
-            == WorldViewMode.REGION_DETAILS
-        ):
-            self.handle_region_details_events(
                 event
             )
             
@@ -299,18 +278,6 @@ class WorldScreen(BaseScreen):
             self.region_form.render(
                 screen
             )
-            
-        elif (
-            self.view_mode == WorldViewMode.REGION_DETAILS
-        ):
-            region = self.selected_region
-            
-            if region is not None:
-                self.region_details_view.render(
-                    screen,
-                    region,
-                    self.locations
-                )
         
         elif self.view_mode == WorldViewMode.SELECT:
             self.render_world_selection(
@@ -597,51 +564,7 @@ class WorldScreen(BaseScreen):
         self,
         region
     ):
-        self.selected_region = region
-        
-        self.refresh_locations()
-        
-        self.view_mode = (
-            WorldViewMode.REGION_DETAILS
+        self.app.open_region(
+            region
         )
         
-    def handle_region_details_events(
-        self,
-        event
-    ):
-        action = (
-            self.region_details_view
-            .handle_event(
-                event
-            )
-        )
-        
-        if action == "back":
-            self.close_region()
-            return
-    
-    def close_region(self):
-        self.selected_region = None
-        self.locations = []
-        
-        self.view_mode = (
-            WorldViewMode.CURRENT
-        )    
-
-    def refresh_locations(self):
-        region = self.selected_region
-        
-        if (
-            region is None
-            or region.id is None
-        ):
-            self.locations = []
-            return None
-        
-        self.locations = (
-            self.app
-            .location_repository
-            .get_all_by_region(
-                region.id
-            )
-        )
