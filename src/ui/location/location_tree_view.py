@@ -14,6 +14,8 @@ class LocationTreeView:
         self.indent_width = 28
         self.row_height = 38
         
+        self.location_rects = []
+        
     def _build_tree(
         self,
         locations
@@ -64,6 +66,8 @@ class LocationTreeView:
         start_x,
         start_y
     ):
+        self.location_rects = []
+        
         if not locations:
             empty_surface = (
                 self.info_font.render(
@@ -125,6 +129,22 @@ class LocationTreeView:
         x = (
             start_x
             + depth * self.indent_width
+        )
+        
+        row_rect = pygame.Rect(
+            x,
+            y - 4,
+            500 - (
+                depth * self.indent_width
+            ),
+            self.row_height
+        )
+        
+        self.location_rects.append(
+            (
+                location,
+                row_rect
+            )
         )
         
         marker = ""
@@ -199,3 +219,23 @@ class LocationTreeView:
             )
         
         return y
+
+    def handle_event(
+        self,
+        event
+    ):
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            for location, rect in (
+                self.location_rects
+            ):
+                if rect.collidepoint(
+                    event.pos
+                ):
+                    return location
+        
+        return None
+    
+    

@@ -49,14 +49,24 @@ class RegionDetailsView:
         if self.back_button.handle_event(
             event
         ):
-            return "back"
+            return "back", None
         
         if self.new_location_button.handle_event(
             event
         ):
-            return "new_location"
+            return "new_location", None
         
-        return None
+        location = (
+            self.location_tree_view
+            .handle_event(
+                event
+            )
+        )
+        
+        if location is not None:
+            return "select_location", location
+        
+        return None, None
     
     def render(
         self,

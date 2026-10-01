@@ -28,6 +28,8 @@ class RegionScreen(BaseScreen):
         self.location_form = LocationForm()
         self.details_view = RegionDetailsView()
         
+        self.selected_location = None
+        
         self.view_mode = RegionViewMode.DETAILS
 
         self.refresh_locations()
@@ -71,7 +73,7 @@ class RegionScreen(BaseScreen):
         self,
         event
     ):
-        action = (
+        action, location = (
             self.details_view.handle_event(
                 event
             )
@@ -89,6 +91,14 @@ class RegionScreen(BaseScreen):
             )
             
             return
+        
+        if (
+            action == "select_location"
+            and location is not None
+        ):
+            self.select_location(
+                location
+            )
     
     def handle_location_form_events(
         self,
@@ -183,3 +193,15 @@ class RegionScreen(BaseScreen):
                 self.region,
                 self.locations
             )
+            
+    def select_location(
+        self,
+        location
+    ):
+        self.selected_location = location
+        
+        print(
+            "Local selecionado:",
+            location.id,
+            location.name
+        )
