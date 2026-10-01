@@ -8,6 +8,7 @@ from src.repositories.npc_repository import NPCRepository
 from src.repositories.campaign_repository import CampaignRepository
 from src.repositories.world_repository import WorldRepository
 from src.repositories.region_repository import RegionRepository
+from src.repositories.location_repository import LocationRepository
 
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
@@ -34,6 +35,10 @@ class App:
         )
         
         self.region_repository = RegionRepository(
+            self.database
+        )
+        
+        self.location_repository = LocationRepository(
             self.database
         )
         

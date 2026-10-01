@@ -4,8 +4,53 @@ class LocationRepository:
     def __init__(self, database):
         self.database = database
         
+    def _validate_parent(
+        self,
+        location
+    ):
+        parent_id = (
+            location.parent_location_id
+        )
+        
+        if parent_id is None:
+            return
+        
+        if (
+            location.id is not None
+            and parent_id == location.id
+        ):
+            raise ValueError(
+                "Um local não pode ser pai de si mesmo."
+            )
+        
+        parent = self.get_by_id(
+            parent_id
+        )
+        
+        if parent is None:
+            raise ValueError(
+                "O local pai informado não existe."
+            )
+        
+        if (
+            parent.region_id
+            != location.region_id
+        ):
+            raise ValueError(
+                "O local pai deve pertencer "
+                "à mesma região."
+            )
+    
     def add(self, location):
-        cursor = self.database.connection.cursor()
+        self._validate_parent(
+            location
+        )
+        
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
         
         cursor.execute(
             """
