@@ -5,9 +5,12 @@ from src.models.npc import NPC
 from src.ui.button import Button
 from src.ui.text_area import TextArea
 from src.ui.text_input import TextInput
+from src.ui.base_form import BaseForm
 
-class NPCForm:
+class NPCForm(BaseForm):
     def __init__(self):
+        super().__init__()
+        
         self.mode = "create"
         
         self.title_font = pygame.font.Font(
@@ -113,9 +116,7 @@ class NPCForm:
             45,
             "Criar NPC"
         )
-        
-        self.validation_message = ""
-        
+                
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_TAB:
@@ -185,11 +186,11 @@ class NPCForm:
     def prepare_create(self):
         self.mode = "create"
             
-        self.clear()
+        super().prepare_create()
             
-        self.submit_button.text = "Criar NPC"
-        
-        self._set_focus(0)
+        self.submit_button.text = (
+            "Criar NPC"
+        )
     
     def load_npc(self, npc):
         self.mode = "edit"
@@ -246,13 +247,7 @@ class NPCForm:
             personality=self.personality_input.text.strip(),
             notes=self.notes_input.text.strip()
         )
-        
-    def clear(self):
-        for field in self.fields:
-            field.clear()
-            
-        self.validation_message = ""
-        
+                
     def render(self, screen):
         # -------------------------
         # Título
@@ -393,44 +388,7 @@ class NPCForm:
 
         self.cancel_button.render(screen)
         self.submit_button.render(screen)
-    
-    def _set_focus(self, index):
-        for field in self.fields:
-            field.active = False
-        
-        active_field = self.fields[index]
-        
-        active_field.active = True
-        
-        if isinstance(
-            active_field,
-            TextArea
-        ):
-            active_field.ensure_cursor_visible()
-    
-    def _get_active_index(self):
-        for index, field in enumerate(self.fields):
-            if field.active:
-                return index
-            
-        return None
-
-    def _move_focus(self, direction):
-        current_index = self._get_active_index()
-        
-        if current_index is None:
-            if direction > 0:
-                next_index = 0
-            else:
-                next_index = len(self.fields) - 1
-        
-        else:
-            next_index = (
-                current_index + direction
-            ) % len(self.fields)
-            
-        self._set_focus(next_index)
-        
+           
     def validate(self):
         self.name_input.error = False
         self.validation_message = ""
