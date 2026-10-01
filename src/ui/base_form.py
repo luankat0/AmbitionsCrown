@@ -110,3 +110,7 @@ class BaseForm:
             return True, "submit"
         
         return False, None
+    
+    def handle_fields_event(self, event):
+        for field in self.fields:
+            field.handle_event(event)

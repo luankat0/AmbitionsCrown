@@ -127,18 +127,11 @@ class NPCForm(BaseForm):
         if handled:
             return action
         
-        self.name_input.handle_event(event)
+        self.handle_fields_event(event)
+        
         if self.name_input.text.strip():
             self.name_input.error = False
             self.validation_message = ""
-            
-        self.race_input.handle_event(event)
-        self.role_input.handle_event(event)
-        self.region_input.handle_event(event)
-
-        self.description_input.handle_event(event)
-        self.personality_input.handle_event(event)
-        self.notes_input.handle_event(event)
 
         if self.cancel_button.handle_event(event):
             return "cancel"

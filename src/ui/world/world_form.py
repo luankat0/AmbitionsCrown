@@ -77,14 +77,7 @@ class WorldForm(BaseForm):
         if handled:
             return action
         
-        self.name_input.handle_event(
-            event
-        )
-        self.description_input.handle_event(
-            event
-        )
-        
-        self.notes_input.handle_event(
+        self.handle_fields_event(
             event
         )
         
