@@ -31,6 +31,8 @@ class RegionRepository:
         
         region.id = cursor.lastrowid
         
+        return region
+        
     def get_all_by_world(
         self,
         world_id: int

@@ -64,14 +64,6 @@ class RegionForm(BaseForm):
         self.submit_button = Button(
             980,
             590,
-            140,
-            45,
-            "Cancelar"
-        )
-        
-        self.submit_button = Button(
-            980,
-            590,
             160,
             45,
             "Criar Região"
@@ -195,6 +187,10 @@ class RegionForm(BaseForm):
                 "O nome da região é obrigatório."
             )
             
+            return False
+        
+        return True
+            
     def build_region(
         self,
         world_id: int
@@ -207,6 +203,11 @@ class RegionForm(BaseForm):
             name=self.name_input.text.strip(),
             region_type=(
                 self.selected_region_type
+            ),
+            description=(
+                self.description_input
+                .text
+                .strip()
             ),
             notes=(
                 self.notes_input
@@ -224,8 +225,7 @@ class RegionForm(BaseForm):
             )
         )
         
-        self._update_type_button()
-        
+        self._update_type_button()      
         
     def render(self, screen):
         title = self.title_font.render(
@@ -322,3 +322,4 @@ class RegionForm(BaseForm):
         self.submit_button.render(
             screen
         )
+        

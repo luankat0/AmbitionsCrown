@@ -6,6 +6,7 @@ from src.models.region import RegionType
 
 from src.ui.button import Button
 from src.ui.world.world_form import WorldForm
+from src.ui.region.region_form import RegionForm
 
 from src.screens.base_screen import BaseScreen
 
@@ -13,6 +14,7 @@ class WorldViewMode(Enum):
     CURRENT = auto()
     SELECT = auto()
     FORM = auto()
+    REGION_FORM = auto()
 
 class WorldScreen(BaseScreen):
     def __init__(self, app):
@@ -48,9 +50,19 @@ class WorldScreen(BaseScreen):
             .get_all()
         )
         
-        self.region = []
+        self.regions = []
         
         self.form = WorldForm()
+        
+        self.region_form = RegionForm()
+        
+        self.new_region_button = Button(
+            720,
+            290,
+            180,
+            45,
+            "+ Nova Região"
+        )
         
         self.new_world_button = Button(
             300,
@@ -101,6 +113,10 @@ class WorldScreen(BaseScreen):
             if self.view_mode == WorldViewMode.FORM:
                 self.cancel_form()
                 return
+            
+            if self.view_mode == WorldViewMode.REGION_FORM:
+                self.cancel_region_form()
+                return
         
             if self.view_mode == WorldViewMode.SELECT:
                 if campaign.world_id is not None:
@@ -112,6 +128,11 @@ class WorldScreen(BaseScreen):
             
         if self.view_mode == WorldViewMode.FORM:
             self.handle_form_events(
+                event
+            )
+            
+        elif self.view_mode == WorldViewMode.REGION_FORM:
+            self.handle_region_form_events(
                 event
             )
             
@@ -132,6 +153,18 @@ class WorldScreen(BaseScreen):
             self.view_mode = (
                 WorldViewMode.SELECT
             )
+            return
+        
+        if self.new_region_button.handle_event(
+            event
+        ):
+            self.region_form.prepare_create()
+            
+            self.view_mode = (
+                WorldViewMode.REGION_FORM
+            )
+            
+            return
             
     def handle_selection_events(
         self,
@@ -223,6 +256,11 @@ class WorldScreen(BaseScreen):
         
         if self.view_mode == WorldViewMode.FORM:
             self.form.render(
+                screen
+            )
+            
+        elif self.view_mode == WorldViewMode.REGION_FORM:
+            self.region_form.render(
                 screen
             )
         
@@ -465,6 +503,10 @@ class WorldScreen(BaseScreen):
             (300, 290)
         )
         
+        self.new_region_button.render(
+            screen
+        )
+        
         if not self.regions:
             empty_surface = (
                 self.info_font.render(
@@ -476,12 +518,12 @@ class WorldScreen(BaseScreen):
             
             screen.blit(
                 empty_surface,
-                (300, 345)
+                (300, 365)
             )
             
             return
         
-        y = 345
+        y = 365
         
         for region in self.regions:
             card_rect = pygame.Rect(
@@ -573,3 +615,62 @@ class WorldScreen(BaseScreen):
             region_type.value
         )
 
+    def handle_region_form_events(
+        self,
+        event
+    ):
+        action = (
+            self.region_form.handle_event(
+                event
+            )
+        )
+        
+        if action == "cancel":
+            self.cancel_region_form()
+            return
+        
+        if action == "submit":
+            self.create_region()
+            return
+        
+    def cancel_region_form(self):
+        self.region_form.clear()
+        
+        self.view_mode = (
+            WorldViewMode.CURRENT
+        )
+        
+    def create_region(self):
+        campaign = self.app.current_campaign
+        
+        if (
+            campaign is None
+            or campaign.world_id is None
+        ):
+            return
+        
+        region = (
+            self.region_form.build_region(
+                campaign.world_id
+            )
+        )
+        
+        if region is None:
+            return
+        
+        self.app.region_repository.add(
+            region
+        )
+        
+        self.regions.insert(
+            0,
+            region
+        )
+        
+        self.region_form.clear()
+        
+        self.view_mode = (
+            WorldViewMode.CURRENT
+        )
+        
+        
