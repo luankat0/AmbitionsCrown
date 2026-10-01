@@ -15,6 +15,7 @@ class WorldViewMode(Enum):
     SELECT = auto()
     FORM = auto()
     REGION_FORM = auto()
+    REGION_DETAILS = auto()
 
 class WorldScreen(BaseScreen):
     def __init__(self, app):
@@ -51,10 +52,11 @@ class WorldScreen(BaseScreen):
         )
         
         self.regions = []
+        self.selected_region = None
+        self.region_card_rects = []
+        self.region_form = RegionForm()
         
         self.form = WorldForm()
-        
-        self.region_form = RegionForm()
         
         self.new_region_button = Button(
             720,
@@ -62,6 +64,14 @@ class WorldScreen(BaseScreen):
             180,
             45,
             "+ Nova Região"
+        )
+        
+        self.back_region_button = Button(
+            300,
+            120,
+            140,
+            45,
+            "← Voltar"
         )
         
         self.new_world_button = Button(
@@ -117,6 +127,10 @@ class WorldScreen(BaseScreen):
             if self.view_mode == WorldViewMode.REGION_FORM:
                 self.cancel_region_form()
                 return
+            
+            if self.view_mode == WorldViewMode.REGION_DETAILS:
+                self.close_region()
+                return
         
             if self.view_mode == WorldViewMode.SELECT:
                 if campaign.world_id is not None:
@@ -133,6 +147,14 @@ class WorldScreen(BaseScreen):
             
         elif self.view_mode == WorldViewMode.REGION_FORM:
             self.handle_region_form_events(
+                event
+            )
+            
+        elif (
+            self.view_mode
+            == WorldViewMode.REGION_DETAILS
+        ):
+            self.handle_region_details_events(
                 event
             )
             
@@ -165,6 +187,22 @@ class WorldScreen(BaseScreen):
             )
             
             return
+        
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            for region,rect in (
+                self.region_card_rects
+            ):
+                if rect.collidepoint(
+                    event.pos
+                ):
+                    self.select_region(
+                        region
+                    )
+                    
+                    return
             
     def handle_selection_events(
         self,
@@ -261,6 +299,11 @@ class WorldScreen(BaseScreen):
             
         elif self.view_mode == WorldViewMode.REGION_FORM:
             self.region_form.render(
+                screen
+            )
+            
+        elif self.view_mode == WorldViewMode.REGION_DETAILS:
+            self.render_region_details(
                 screen
             )
         
@@ -507,6 +550,8 @@ class WorldScreen(BaseScreen):
             screen
         )
         
+        self.region_card_rects = []
+        
         if not self.regions:
             empty_surface = (
                 self.info_font.render(
@@ -531,6 +576,13 @@ class WorldScreen(BaseScreen):
                 y,
                 600,
                 75
+            )
+            
+            self.region_card_rects.append(
+                (
+                    region,
+                    card_rect
+                )
             )
             
             pygame.draw.rect(
@@ -673,4 +725,123 @@ class WorldScreen(BaseScreen):
             WorldViewMode.CURRENT
         )
         
+    def select_region(
+        self,
+        region
+    ):
+        self.selected_region = region
+        
+        self.view_mode = (
+            WorldViewMode.REGION_DETAILS
+        )
+        
+    def handle_region_details_events(
+        self,
+        event
+    ):
+        if self.back_region_button.handle_event(
+            event
+        ):
+            self.close_region()
+            return
+    
+    def close_region(self):
+        self.selected_region = None
+        
+        self.view_mode = (
+            WorldViewMode.CURRENT
+        )
+
+    def render_region_details(
+        self,
+        screen
+    ):
+        region = self.selected_region
+        
+        if region is None:
+            return
+        
+        self.back_region_button.render(
+            screen
+        )
+        
+        name_surface = (
+            self.name_font.render(
+                region.name,
+                True,
+                (235, 235, 240)
+            )
+        )
+        
+        screen.blit(
+            name_surface,
+            (300, 200)
+        )
+        
+        type_text = (
+            self._get_region_type_label(
+                region.region_type
+            )
+        )
+        
+        type_surface = (
+            self.info_font.render(
+                type_text,
+                True,
+                (160, 160, 175)
+            )
+        )
+        
+        screen.blit(
+            type_surface,
+            (300, 250)
+        )
+        
+        description = (
+            region.description.strip()
+        )
+        
+        if not description:
+            description = (
+                "Sem descrição"
+            )
+            
+        description_surface = (
+            self.info_font.render(
+                description,
+                True,
+                (190, 190, 200)
+            )
+        )
+        
+        screen.blit(
+            description_surface,
+            (300, 310)
+        )
+        
+        locations_title = (
+            self.name_font.render(
+                "Locais",
+                True,
+                (235, 235, 240)
+            )
+        )
+        
+        screen.blit(
+            locations_title,
+            (300, 400)
+        )
+        
+        placeholder = (
+            self.info_font.render(
+                "Os locais desta região aparecerão aqui.",
+                True,
+                (150, 150, 160)
+            )
+        )
+        
+        screen.blit(
+            placeholder,
+            (300, 455)
+        )
         
