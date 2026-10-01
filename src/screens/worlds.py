@@ -2,6 +2,8 @@ import pygame
 
 from enum import Enum, auto
 
+from src.models.region import RegionType
+
 from src.ui.button import Button
 from src.ui.world.world_form import WorldForm
 
@@ -46,6 +48,8 @@ class WorldScreen(BaseScreen):
             .get_all()
         )
         
+        self.region = []
+        
         self.form = WorldForm()
         
         self.new_world_button = Button(
@@ -79,6 +83,8 @@ class WorldScreen(BaseScreen):
             self.view_mode = (
                 WorldViewMode.SELECT
             )
+            
+        self.refresh_regions()
         
     def handle_event(self, event):
         super().handle_event(event)
@@ -295,6 +301,9 @@ class WorldScreen(BaseScreen):
         self.change_world_button.render(
             screen
         )
+        self.render_regions(
+            screen
+        )
         
     def render_world_selection(
         self,
@@ -415,7 +424,152 @@ class WorldScreen(BaseScreen):
             campaign
         )
         
+        self.refresh_regions()
+        
         self.view_mode = (
             WorldViewMode.CURRENT
         )        
         
+    def refresh_regions(self):
+        campaign = self.app.current_campaign
+        
+        if (
+            campaign is None
+            or campaign.world_id is None
+        ):
+            self.regions = []
+            return
+        
+        self.regions = (
+            self.app
+            .region_repository
+            .get_all_by_world(
+                campaign.world_id
+            )
+        )
+        
+    def render_regions(
+        self,
+        screen
+    ):
+        section_title = (
+            self.name_font.render(
+                "Regiões",
+                True,
+                (235, 235, 240)
+            )
+        )
+        
+        screen.blit(
+            section_title,
+            (300, 290)
+        )
+        
+        if not self.regions:
+            empty_surface = (
+                self.info_font.render(
+                    "Nenhuma região criada neste mundo.",
+                    True,
+                    (150, 150, 160)
+                )
+            )
+            
+            screen.blit(
+                empty_surface,
+                (300, 345)
+            )
+            
+            return
+        
+        y = 345
+        
+        for region in self.regions:
+            card_rect = pygame.Rect(
+                300,
+                y,
+                600,
+                75
+            )
+            
+            pygame.draw.rect(
+                screen,
+                (45, 45, 55),
+                card_rect,
+                border_radius=8
+            )
+            
+            name_surface = (
+                self.info_font.render(
+                    region.name,
+                    True,
+                    (235, 235, 240)
+                )
+            )
+            
+            screen.blit(
+                name_surface,
+                (
+                    card_rect.x + 20,
+                    card_rect.y + 12
+                )
+            )
+            
+            type_text = (
+                self._get_region_type_label(
+                    region.region_type
+                )
+            )
+            
+            type_surface = (
+                self.info_font.render(
+                    type_text,
+                    True,
+                    (155, 155, 165)
+                )
+            )
+            
+            screen.blit(
+                type_surface,
+                (
+                    card_rect.x + 20,
+                    card_rect.y + 42
+                )
+            )
+            
+            y += 90
+            
+    def _get_region_type_label(
+        self,
+        region_type: RegionType
+    ):
+        labels = {
+            RegionType.KINGDOM:
+            "Reino",
+
+            RegionType.PROVINCE:
+                "Província",
+
+            RegionType.TERRITORY:
+                "Território",
+
+            RegionType.FOREST:
+                "Floresta",
+
+            RegionType.DESERT:
+                "Deserto",
+
+            RegionType.MOUNTAINS:
+                "Montanhas",
+
+            RegionType.ISLAND:
+                "Ilha",
+
+            RegionType.OTHER:
+                "Outro",
+        }
+        
+        return labels.get(
+            region_type,
+            region_type.value
+        )
+
