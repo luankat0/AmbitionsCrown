@@ -6,8 +6,8 @@ from src.ui.region.region_labels import (
     get_region_type_label
 )
 
-from src.ui.location.location_labels import (
-    get_location_type_label
+from src.ui.location.location_tree_view import (
+    LocationTreeView
 )
 
 class RegionDetailsView:
@@ -28,6 +28,10 @@ class RegionDetailsView:
             140,
             45,
             "← Voltar"
+        )
+        
+        self.location_tree_view = (
+            LocationTreeView()
         )
         
     def handle_event(
@@ -190,55 +194,9 @@ class RegionDetailsView:
             (300, 520)
         )
         
-        if not locations:
-            empty_surface = (
-                self.info_font.render(
-                    "Nenhum local criado nesta região.",
-                    True,
-                    (150, 150, 160)
-                )
-            )
-        
-            screen.blit(
-                empty_surface,
-                (300, 575)
-            )
-            
-            return
-        
-        y = 575
-        
-        for location in locations:
-            name_surface = (
-                self.info_font.render(
-                    location.name,
-                    True,
-                    (220, 220, 230)
-                )
-            )
-            
-            screen.blit(
-                name_surface,
-                (300, y)
-            )
-            
-            type_text = (
-                get_location_type_label(
-                    location.location_type
-                )
-            )
-            
-            type_surface = (
-                self.info_font.render(
-                    type_text,
-                    True,
-                    (150, 150, 165)
-                )
-            )
-            
-            screen.blit(
-                type_surface,
-                (500, y)
-            )
-            
-            y += 32
+        self.location_tree_view.render(
+            screen,
+            locations,
+            start_x=300,
+            start_y=575
+        )
