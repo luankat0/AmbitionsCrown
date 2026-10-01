@@ -56,6 +56,26 @@ class Database:
         
         cursor.execute(
             """
+            CREATE TABLE IF NOT EXISTS regions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                world_id INTEGER NOT NULL,
+
+                name TEXT NOT NULL,
+
+                region_type TEXT NOT NULL DEFAULT 'other',
+
+                description TEXT NOT NULL DEFAULT '',
+                notes TEXT NOT NULL DEFAULT '',
+
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS campaigns (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 
