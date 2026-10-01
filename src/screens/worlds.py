@@ -2,12 +2,13 @@ import pygame
 
 from enum import Enum, auto
 
-from src.models.region import RegionType
-
 from src.ui.button import Button
+
 from src.ui.world.world_form import WorldForm
 from src.ui.region.region_form import RegionForm
+
 from src.ui.region.region_details_view import RegionDetailsView
+from src.ui.region.region_list_view import RegionListView
 
 from src.screens.base_screen import BaseScreen
 
@@ -54,22 +55,18 @@ class WorldScreen(BaseScreen):
         
         self.regions = []
         self.selected_region = None
-        self.region_card_rects = []
+        
         self.region_form = RegionForm()
+        
+        self.region_list_view = (
+            RegionListView()
+        )
         
         self.region_details_view = (
             RegionDetailsView()
         )
         
         self.form = WorldForm()
-        
-        self.new_region_button = Button(
-            720,
-            290,
-            180,
-            45,
-            "+ Nova Região"
-        )
         
         self.new_world_button = Button(
             300,
@@ -165,7 +162,10 @@ class WorldScreen(BaseScreen):
                 event
             )
                 
-    def handle_current_events(self, event):            
+    def handle_current_events(
+        self, 
+        event
+    ):            
         if self.change_world_button.handle_event(
             event
         ):
@@ -174,9 +174,14 @@ class WorldScreen(BaseScreen):
             )
             return
         
-        if self.new_region_button.handle_event(
-            event
-        ):
+        action, region = (
+            self.region_list_view
+            .handle_event(
+                event
+            )
+        )
+        
+        if action == "new":
             self.region_form.prepare_create()
             
             self.view_mode = (
@@ -186,20 +191,14 @@ class WorldScreen(BaseScreen):
             return
         
         if (
-            event.type == pygame.MOUSEBUTTONDOWN
-            and event.button == 1
+            action == "select"
+            and region is not None
         ):
-            for region,rect in (
-                self.region_card_rects
-            ):
-                if rect.collidepoint(
-                    event.pos
-                ):
-                    self.select_region(
-                        region
-                    )
-                    
-                    return
+            self.select_region(
+                region
+            )
+            
+            return
             
     def handle_selection_events(
         self,
@@ -385,8 +384,9 @@ class WorldScreen(BaseScreen):
         self.change_world_button.render(
             screen
         )
-        self.render_regions(
-            screen
+        self.region_list_view.render(
+            screen,
+            self.regions
         )
         
     def render_world_selection(
@@ -531,145 +531,7 @@ class WorldScreen(BaseScreen):
                 campaign.world_id
             )
         )
-        
-    def render_regions(
-        self,
-        screen
-    ):
-        section_title = (
-            self.name_font.render(
-                "Regiões",
-                True,
-                (235, 235, 240)
-            )
-        )
-        
-        screen.blit(
-            section_title,
-            (300, 290)
-        )
-        
-        self.new_region_button.render(
-            screen
-        )
-        
-        self.region_card_rects = []
-        
-        if not self.regions:
-            empty_surface = (
-                self.info_font.render(
-                    "Nenhuma região criada neste mundo.",
-                    True,
-                    (150, 150, 160)
-                )
-            )
-            
-            screen.blit(
-                empty_surface,
-                (300, 365)
-            )
-            
-            return
-        
-        y = 365
-        
-        for region in self.regions:
-            card_rect = pygame.Rect(
-                300,
-                y,
-                600,
-                75
-            )
-            
-            self.region_card_rects.append(
-                (
-                    region,
-                    card_rect
-                )
-            )
-            
-            pygame.draw.rect(
-                screen,
-                (45, 45, 55),
-                card_rect,
-                border_radius=8
-            )
-            
-            name_surface = (
-                self.info_font.render(
-                    region.name,
-                    True,
-                    (235, 235, 240)
-                )
-            )
-            
-            screen.blit(
-                name_surface,
-                (
-                    card_rect.x + 20,
-                    card_rect.y + 12
-                )
-            )
-            
-            type_text = (
-                self._get_region_type_label(
-                    region.region_type
-                )
-            )
-            
-            type_surface = (
-                self.info_font.render(
-                    type_text,
-                    True,
-                    (155, 155, 165)
-                )
-            )
-            
-            screen.blit(
-                type_surface,
-                (
-                    card_rect.x + 20,
-                    card_rect.y + 42
-                )
-            )
-            
-            y += 90
-            
-    def _get_region_type_label(
-        self,
-        region_type: RegionType
-    ):
-        labels = {
-            RegionType.KINGDOM:
-            "Reino",
-
-            RegionType.PROVINCE:
-                "Província",
-
-            RegionType.TERRITORY:
-                "Território",
-
-            RegionType.FOREST:
-                "Floresta",
-
-            RegionType.DESERT:
-                "Deserto",
-
-            RegionType.MOUNTAINS:
-                "Montanhas",
-
-            RegionType.ISLAND:
-                "Ilha",
-
-            RegionType.OTHER:
-                "Outro",
-        }
-        
-        return labels.get(
-            region_type,
-            region_type.value
-        )
-
+                
     def handle_region_form_events(
         self,
         event

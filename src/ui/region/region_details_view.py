@@ -105,7 +105,7 @@ class RegionDetailsView:
         
         screen.blit(
             label_surface,
-            (300, 300)
+            (300, 320)
         )
         
         description = (
@@ -125,7 +125,7 @@ class RegionDetailsView:
         
         screen.blit(
             description_surface,
-            (300, 330)
+            (300, 355)
         )
         
     def _render_notes(
@@ -143,7 +143,7 @@ class RegionDetailsView:
         
         screen.blit(
             label_surface,
-            (300, 300)
+            (300, 410)
         )
         
         notes = region.notes.strip()
@@ -161,7 +161,7 @@ class RegionDetailsView:
         
         screen.blit(
             notes_surface,
-            (300, 410)
+            (300, 455)
         )
         
     def _render_locations_section(
@@ -178,20 +178,20 @@ class RegionDetailsView:
         
         screen.blit(
             title_surface,
-            (300, 480)
+            (300, 520)
         )
         
         placeholder_surface = (
             self.info_font.render(
                 "Os locais desta região aparecerão aqui.",
                 True,
-                (150, 150, 100)
+                (150, 150, 160)
             )
         )
         
         screen.blit(
             placeholder_surface,
-            (300, 535)
+            (300, 575)
         )
         
     def _get_region_type_label(
