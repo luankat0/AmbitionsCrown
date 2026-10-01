@@ -56,6 +56,8 @@ class WorldScreen(BaseScreen):
         self.regions = []
         self.selected_region = None
         
+        self.locations = []
+        
         self.region_form = RegionForm()
         
         self.region_list_view = (
@@ -306,7 +308,8 @@ class WorldScreen(BaseScreen):
             if region is not None:
                 self.region_details_view.render(
                     screen,
-                    region
+                    region,
+                    self.locations
                 )
         
         elif self.view_mode == WorldViewMode.SELECT:
@@ -596,6 +599,8 @@ class WorldScreen(BaseScreen):
     ):
         self.selected_region = region
         
+        self.refresh_locations()
+        
         self.view_mode = (
             WorldViewMode.REGION_DETAILS
         )
@@ -617,7 +622,26 @@ class WorldScreen(BaseScreen):
     
     def close_region(self):
         self.selected_region = None
+        self.locations = []
         
         self.view_mode = (
             WorldViewMode.CURRENT
         )    
+
+    def refresh_locations(self):
+        region = self.selected_region
+        
+        if (
+            region is None
+            or region.id is None
+        ):
+            self.locations = []
+            return None
+        
+        self.locations = (
+            self.app
+            .location_repository
+            .get_all_by_region(
+                region.id
+            )
+        )

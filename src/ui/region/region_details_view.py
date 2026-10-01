@@ -6,6 +6,10 @@ from src.ui.region.region_labels import (
     get_region_type_label
 )
 
+from src.ui.location.location_labels import (
+    get_location_type_label
+)
+
 class RegionDetailsView:
     def __init__(self):
         self.name_font = pygame.font.Font(
@@ -40,7 +44,8 @@ class RegionDetailsView:
     def render(
         self,
         screen,
-        region
+        region,
+        locations
     ):
         self.back_button.render(
             screen
@@ -89,7 +94,8 @@ class RegionDetailsView:
         )
         
         self._render_locations_section(
-            screen
+            screen,
+            locations
         )
         
     def _render_description(
@@ -168,7 +174,8 @@ class RegionDetailsView:
         
     def _render_locations_section(
         self,
-        screen
+        screen,
+        locations
     ):
         title_surface = (
             self.name_font.render(
@@ -183,15 +190,55 @@ class RegionDetailsView:
             (300, 520)
         )
         
-        placeholder_surface = (
-            self.info_font.render(
-                "Os locais desta região aparecerão aqui.",
-                True,
-                (150, 150, 160)
+        if not locations:
+            empty_surface = (
+                self.info_font.render(
+                    "Nenhum local criado nesta região.",
+                    True,
+                    (150, 150, 160)
+                )
             )
-        )
         
-        screen.blit(
-            placeholder_surface,
-            (300, 575)
-        )
+            screen.blit(
+                empty_surface,
+                (300, 575)
+            )
+            
+            return
+        
+        y = 575
+        
+        for location in locations:
+            name_surface = (
+                self.info_font.render(
+                    location.name,
+                    True,
+                    (220, 220, 230)
+                )
+            )
+            
+            screen.blit(
+                name_surface,
+                (300, y)
+            )
+            
+            type_text = (
+                get_location_type_label(
+                    location.location_type
+                )
+            )
+            
+            type_surface = (
+                self.info_font.render(
+                    type_text,
+                    True,
+                    (150, 150, 165)
+                )
+            )
+            
+            screen.blit(
+                type_surface,
+                (500, y)
+            )
+            
+            y += 32
