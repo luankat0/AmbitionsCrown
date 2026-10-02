@@ -73,6 +73,9 @@ class RegionForm(BaseForm):
             "Criar Região"
         )
         
+        self.mode = "create"
+        self.editing_region_id = None
+        
         self.fields = [
             self.name_input,
             self.description_input,
@@ -168,6 +171,7 @@ class RegionForm(BaseForm):
             return None
         
         return Region(
+            id=self.editing_region_id,
             world_id=world_id,
             name=self.name_input.text.strip(),
             region_type=(
@@ -188,6 +192,9 @@ class RegionForm(BaseForm):
     def prepare_create(self):
         super().prepare_create()
         
+        self.mode = "create"
+        self.editing_region_id = None
+        
         self.region_type_index = (
             self.region_types.index(
                 RegionType.OTHER
@@ -195,6 +202,49 @@ class RegionForm(BaseForm):
         )
         
         self._update_type_button()      
+        self.submit_button.text = (
+            "Criar Região"
+        )
+        
+    def prepare_edit(
+        self,
+        region
+    ):
+        self.clear()
+        
+        self.mode = "edit"
+        self.editing_region_id = region.id
+        
+        self.name_input.text = region.name
+        self.name_input.cursor_index = len(
+            region.name
+        )
+        
+        self.description_input.text = (
+            region.description
+        )
+        self.description_input.cursor_index = len(
+            region.description
+        )
+        
+        self.notes_input.text = (
+            region.notes
+        )
+        self.notes_input.cursor_index = len(
+            region.notes
+        )
+        
+        self.region_type_index = (
+            self.region_types.index(
+                region.region_type
+            )
+        )
+        
+        self._update_type_button()
+        
+        self.submit_button.text = "Salvar"
+        
+        self._set_focus(0)
         
     def render(self, screen):
         title = self.title_font.render(
@@ -290,5 +340,4 @@ class RegionForm(BaseForm):
 
         self.submit_button.render(
             screen
-        )
-        
+        )    

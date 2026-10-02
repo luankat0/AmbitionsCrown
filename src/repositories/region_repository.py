@@ -125,3 +125,43 @@ class RegionRepository:
             created_at=row["created_at"],
             updated_at=row["updated_at"]
         )
+    
+    def update(
+        self,
+        region
+    ):
+        if region.id is None:
+            raise ValueError(
+                "Não é possível atualizar "
+                "uma região sem ID."
+            )
+            
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
+        
+        cursor.execute(
+            """
+            UPDATE regions
+            SET
+                name = ?,
+                region_type = ?,
+                description = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                region.name,
+                region.region_type.value,
+                region.description,
+                region.notes,
+                region.id
+            )
+        )
+        
+        self.database.connection.commit()
+        
+        return region
