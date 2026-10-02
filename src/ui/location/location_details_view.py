@@ -39,9 +39,19 @@ class LocationDetailsView:
         if self.back_button.handle_event(
             event
         ):
-            return "back"
+            return "back", None
+        
+        child = (
+            self.children_view
+            .handle_event(
+                event
+            )
+        )
+        
+        if child is not None:
+            return "open_child", child
 
-        return None
+        return None, None
 
     def render(
         self,

@@ -11,6 +11,24 @@ class LocationChildrenView:
             None,
             24
         )
+        
+        self.child_rects = []
+        
+    def handle_event(
+        self,
+        event
+    ):
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            for location, rect in self.child_rects:
+                if rect.collidepoint(
+                    event.pos
+                ):
+                    return location
+        
+        return None
 
     def render(
         self,
@@ -19,6 +37,8 @@ class LocationChildrenView:
         start_x,
         start_y
     ):
+        self.child_rects = []        
+
         if not children:
             empty_surface = (
                 self.info_font.render(
@@ -57,6 +77,20 @@ class LocationChildrenView:
         x,
         y
     ):
+        row_rect = pygame.Rect(
+            x,
+            y - 4,
+            580,
+            34
+        )
+        
+        self.child_rects.append(
+            (
+                location,
+                row_rect
+            )
+        )
+        
         name_surface = (
             self.info_font.render(
                 location.name,

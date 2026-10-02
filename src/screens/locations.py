@@ -42,17 +42,26 @@ class LocationScreen(BaseScreen):
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
-            self.return_to_region()
+            self.navigate_back()
             return
         
-        action = (
+        action, child = (
             self.details_view.handle_event(
                 event
             )
         )
         
         if action == "back":
-            self.return_to_region()
+            self.navigate_back()
+            return
+        
+        if (
+            action == "open_child"
+            and child is not None
+        ):
+            self.open_child(
+                child
+            )
             return
         
     def return_to_region(self):
@@ -88,4 +97,40 @@ class LocationScreen(BaseScreen):
             .get_children(
                 self.location.id
             )
+        )
+
+    def open_child(
+        self,
+        child
+    ):
+        self.app.open_location(
+            self.region,
+            child
+        )
+        
+    def navigate_back(self):
+        parent_id = (
+            self.location
+            .parent_location_id
+        )
+        
+        if parent_id is None:
+            self.return_to_region()
+            return
+
+        parent = (
+            self.app
+            .location_repository
+            .get_by_id(
+                parent_id
+            )
+        )
+        
+        if parent is None:
+            self.return_to_region()
+            return
+        
+        self.app.open_location(
+            self.region,
+            parent
         )
