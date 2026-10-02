@@ -30,6 +30,14 @@ class LocationDetailsView:
             "← Voltar"
         )
         
+        self.new_child_button = Button(
+            720,
+            520,
+            200,
+            45,
+            "+ Novo Sublocal"
+        )
+        
         self.children_view = LocationChildrenView()
 
     def handle_event(
@@ -40,6 +48,11 @@ class LocationDetailsView:
             event
         ):
             return "back", None
+        
+        if self.new_child_button.handle_event(
+            event
+        ):
+            return "new_child", None
         
         child = (
             self.children_view
@@ -195,6 +208,10 @@ class LocationDetailsView:
                 True,
                 (235, 235, 240)
             )
+        )
+        
+        self.new_child_button.render(
+            screen
         )
 
         screen.blit(
