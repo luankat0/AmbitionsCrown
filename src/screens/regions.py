@@ -162,9 +162,7 @@ class RegionScreen(BaseScreen):
         )
 
     def return_to_world(self):
-        self.app.change_screen(
-            "world"
-        )
+        self.app.open_world()
 
     def update(self):
         pass

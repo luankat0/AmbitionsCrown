@@ -62,26 +62,35 @@ class App:
             self
         )
 
-    def change_screen(self, screen_name):
-        if screen_name == "campaigns":
-            self.current_screen = CampaignScreen(
-                self
+    def change_screen(
+        self, 
+        screen_name
+    ):
+        screens = {
+            "campaigns":
+                self.open_campaigns,
+                
+            "dashboard":
+                self.open_dashboard,
+            
+            "world":
+                self.open_world,
+            
+            "npcs":
+                self.open_npcs,
+        }
+        
+        action = screens.get(
+            screen_name
+        )
+        
+        if action is None:
+            raise ValueError(
+                f"Tela desconhecida: {screen_name}"
             )
         
-        elif screen_name == "dashboard":
-            self.current_screen = DashboardScreen(
-                self
-            )
-    
-        elif screen_name == "npcs":
-            self.current_screen = NPCScreen(
-                self
-            )
+        action()
         
-        elif screen_name == "world":
-            self.current_screen = WorldScreen(
-                self
-            )
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -121,18 +130,20 @@ class App:
         
     def return_to_campaigns(self):
         self.close_campaign()
-        
-        self.change_screen(
-            "campaigns"
-        )
+        self.open_campaigns()
         
     def open_region(
         self,
         region
     ):
-        self.current_screen = RegionScreen(
-            self,
-            region
+        if self.current_campaign is None:
+            return
+        
+        self.current_screen = (
+            RegionScreen(
+                self,
+                region
+            )
         )
 
     def open_location(
@@ -140,10 +151,42 @@ class App:
         region,
         location
     ):
+        if self.current_campaign is None:
+            return
+        
         self.current_screen = (
             LocationScreen(
                 self,
                 region,
                 location
             )
+        )
+
+    def open_campaigns(self):
+        self.current_screen = (
+            CampaignScreen(self)
+        )
+        
+    def open_dashboard(self):
+        if self.current_campaign is None:
+            return
+        
+        self.current_screen = (
+            DashboardScreen(self)
+        )
+    
+    def open_world(self):
+        if self.current_campaign is None:
+            return
+        
+        self.current_screen = (
+            WorldScreen(self)
+        )
+    
+    def open_npcs(self):
+        if self.current_campaign is None:
+            return
+        
+        self.current_screen = (
+            NPCScreen(self)
         )
