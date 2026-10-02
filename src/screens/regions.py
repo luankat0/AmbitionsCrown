@@ -27,9 +27,7 @@ class RegionScreen(BaseScreen):
         
         self.location_form = LocationForm()
         self.details_view = RegionDetailsView()
-        
-        self.selected_location = None
-        
+                
         self.view_mode = RegionViewMode.DETAILS
 
         self.refresh_locations()
@@ -198,10 +196,7 @@ class RegionScreen(BaseScreen):
         self,
         location
     ):
-        self.selected_location = location
-        
-        print(
-            "Local selecionado:",
-            location.id,
-            location.name
+        self.app.open_location(
+            self.region,
+            location
         )

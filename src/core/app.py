@@ -15,6 +15,7 @@ from src.screens.npcs import NPCScreen
 from src.screens.campaigns import CampaignScreen
 from src.screens.worlds import WorldScreen
 from src.screens.regions import RegionScreen
+from src.screens.locations import LocationScreen
 
 class App:
     def __init__(self):
@@ -132,4 +133,17 @@ class App:
         self.current_screen = RegionScreen(
             self,
             region
+        )
+
+    def open_location(
+        self,
+        region,
+        location
+    ):
+        self.current_screen = (
+            LocationScreen(
+                self,
+                region,
+                location
+            )
         )
