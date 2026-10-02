@@ -1,6 +1,10 @@
 import pygame
 
 from src.ui.button import Button
+
+from src.ui.location.location_children_view import (
+    LocationChildrenView
+)
 from src.ui.location.location_labels import (
     get_location_type_label
 )
@@ -25,6 +29,8 @@ class LocationDetailsView:
             45,
             "← Voltar"
         )
+        
+        self.children_view = LocationChildrenView()
 
     def handle_event(
         self,
@@ -40,7 +46,8 @@ class LocationDetailsView:
     def render(
         self,
         screen,
-        location
+        location,
+        children
     ):
         self.back_button.render(
             screen
@@ -88,8 +95,9 @@ class LocationDetailsView:
             location
         )
 
-        self._render_children_placeholder(
-            screen
+        self._render_children_section(
+            screen,
+            children
         )
         
     def _render_description(
@@ -166,9 +174,10 @@ class LocationDetailsView:
             (300, 445)
         )
         
-    def _render_children_placeholder(
+    def _render_children_section(
         self,
-        screen
+        screen,
+        children
     ):
         title_surface = (
             self.name_font.render(
@@ -177,21 +186,15 @@ class LocationDetailsView:
                 (235, 235, 240)
             )
         )
-        
+
         screen.blit(
             title_surface,
             (300, 520)
         )
-        
-        placeholder_surface = (
-            self.info_font.render(
-                "Os sublocais aparecerão aqui.",
-                True,
-                (150, 150, 160)
-            )
-        )
-        
-        screen.blit(
-            placeholder_surface,
-            (300, 575)
+
+        self.children_view.render(
+            screen,
+            children,
+            start_x=300,
+            start_y=575
         )

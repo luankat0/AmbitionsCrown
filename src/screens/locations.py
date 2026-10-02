@@ -22,9 +22,13 @@ class LocationScreen(BaseScreen):
         self.region = region
         self.location = location
         
+        self.children = []
+        
         self.details_view = (
             LocationDetailsView()
         )
+        
+        self.refresh_children()
         
     def handle_event(
         self,
@@ -69,5 +73,19 @@ class LocationScreen(BaseScreen):
         
         self.details_view.render(
             screen,
-            self.location
+            self.location,
+            self.children
+        )
+        
+    def refresh_children(self):
+        if self.location.id is None:
+            self.children = []
+            return
+        
+        self.children = (
+            self.app
+            .location_repository
+            .get_children(
+                self.location.id
+            )
         )
