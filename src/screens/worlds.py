@@ -13,8 +13,8 @@ from src.screens.base_screen import BaseScreen
 
 class WorldViewMode(Enum):
     CURRENT = auto()
-    SELECT = auto()
-    FORM = auto()
+    WORLD_SELECT = auto()
+    WORLD_FORM = auto()
     REGION_FORM = auto()
 
 class WorldScreen(BaseScreen):
@@ -59,7 +59,7 @@ class WorldScreen(BaseScreen):
             RegionListView()
         )
         
-        self.form = WorldForm()
+        self.world_form = WorldForm()
         
         self.new_world_button = Button(
             300,
@@ -90,7 +90,7 @@ class WorldScreen(BaseScreen):
             )
         else:
             self.view_mode = (
-                WorldViewMode.SELECT
+                WorldViewMode.WORLD_SELECT
             )
             
         self.refresh_regions()
@@ -107,15 +107,15 @@ class WorldScreen(BaseScreen):
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
-            if self.view_mode == WorldViewMode.FORM:
-                self.cancel_form()
+            if self.view_mode == WorldViewMode.WORLD_FORM:
+                self.cancel_world_form()
                 return
             
             if self.view_mode == WorldViewMode.REGION_FORM:
                 self.cancel_region_form()
                 return
         
-            if self.view_mode == WorldViewMode.SELECT:
+            if self.view_mode == WorldViewMode.WORLD_SELECT:
                 if campaign.world_id is not None:
                     self.view_mode = (
                         WorldViewMode.CURRENT
@@ -123,8 +123,8 @@ class WorldScreen(BaseScreen):
                     
                 return
             
-        if self.view_mode == WorldViewMode.FORM:
-            self.handle_form_events(
+        if self.view_mode == WorldViewMode.WORLD_FORM:
+            self.handle_world_form_events(
                 event
             )
             
@@ -133,17 +133,17 @@ class WorldScreen(BaseScreen):
                 event
             )
             
-        elif self.view_mode == WorldViewMode.SELECT:
-            self.handle_selection_events(
+        elif self.view_mode == WorldViewMode.WORLD_SELECT:
+            self.handle_world_selection_events(
                 event
             )
             
         else:
-            self.handle_current_events(
+            self.handle_world_current_events(
                 event
             )
                 
-    def handle_current_events(
+    def handle_world_current_events(
         self, 
         event
     ):            
@@ -151,7 +151,7 @@ class WorldScreen(BaseScreen):
             event
         ):
             self.view_mode = (
-                WorldViewMode.SELECT
+                WorldViewMode.WORLD_SELECT
             )
             return
         
@@ -181,17 +181,17 @@ class WorldScreen(BaseScreen):
             
             return
             
-    def handle_selection_events(
+    def handle_world_selection_events(
         self,
         event
     ):
         if self.new_world_button.handle_event(
             event
         ):
-            self.form.prepare_create()
+            self.world_form.prepare_create()
             
             self.view_mode = (
-                WorldViewMode.FORM
+                WorldViewMode.WORLD_FORM
             )
             
             return
@@ -212,31 +212,31 @@ class WorldScreen(BaseScreen):
                     
                     return
                 
-    def handle_form_events(
+    def handle_world_form_events(
         self,
         event
     ):
-        action = self.form.handle_event(
+        action = self.world_form.handle_event(
             event
         )
         
         if action == "cancel":
-            self.cancel_form()
+            self.cancel_world_form()
             return
         
         if action == "submit":
             self.create_world()
             return
         
-    def cancel_form(self):
-        self.form.clear()
+    def cancel_world_form(self):
+        self.world_form.clear()
         
         self.view_mode = (
-            WorldViewMode.SELECT
+            WorldViewMode.WORLD_SELECT
         )
         
     def create_world(self):
-        world = self.form.build_world()
+        world = self.world_form.build_world()
         
         if world is None:
             return
@@ -250,7 +250,7 @@ class WorldScreen(BaseScreen):
             world
         )
         
-        self.form.clear()
+        self.world_form.clear()
         
         self.select_world(
             world
@@ -269,8 +269,8 @@ class WorldScreen(BaseScreen):
         if campaign is None:
             return
         
-        if self.view_mode == WorldViewMode.FORM:
-            self.form.render(
+        if self.view_mode == WorldViewMode.WORLD_FORM:
+            self.world_form.render(
                 screen
             )
             
@@ -279,7 +279,7 @@ class WorldScreen(BaseScreen):
                 screen
             )
         
-        elif self.view_mode == WorldViewMode.SELECT:
+        elif self.view_mode == WorldViewMode.WORLD_SELECT:
             self.render_world_selection(
                 screen
             )
