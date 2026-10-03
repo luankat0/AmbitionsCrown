@@ -2,11 +2,12 @@ import pygame
 
 from src.ui.button import Button
 
-class ConfirmDialog:
+from src.ui.dialogs.base_dialog import BaseDialog
+
+class ConfirmDialog(BaseDialog):
     def __init__(self):
-        self.visible = False
-        
-        self.title: str = ""
+        super().__init__("")
+                
         self.message: str = ""
         self.warning: str = ""
         
@@ -51,16 +52,14 @@ class ConfirmDialog:
         
         self.visible = True
         
-    def close(self):
-        self.visible = False
-        
     def handle_event(self, event):
         if  not self.visible:
             return None
         
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                return "cancel"
+        if self.handle_base_event(
+            event
+        ):
+            return "cancel"
             
         if self.cancel_button.handle_event(event):
             return "cancel"
