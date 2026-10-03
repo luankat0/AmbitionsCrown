@@ -46,6 +46,14 @@ class LocationDetailsView:
             "Editar Local"
         )
         
+        self.delete_button = Button(
+            940,
+            255,
+            180,
+            45,
+            "Excluir Local"
+        )
+        
         self.children_view = LocationChildrenView()
 
     def handle_event(
@@ -61,6 +69,11 @@ class LocationDetailsView:
             event
         ):
             return "edit_location", None
+        
+        if self.delete_button.handle_event(
+            event
+        ):
+            return "delete_location", None
         
         if self.new_child_button.handle_event(
             event
@@ -90,6 +103,10 @@ class LocationDetailsView:
         )
         
         self.edit_button.render(
+            screen
+        )
+        
+        self.delete_button.render(
             screen
         )
 

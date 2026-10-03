@@ -4,12 +4,11 @@ from enum import Enum, auto
 
 from src.screens.base_screen import BaseScreen
 
-from src.ui.location.location_details_view import (
-    LocationDetailsView
-)
-from src.ui.location.location_form import (
-    LocationForm
-)
+from src.ui.location.location_details_view import LocationDetailsView
+from src.ui.location.location_form import LocationForm
+
+from src.ui.dialogs.confirm_dialog import ConfirmDialog
+from src.ui.dialogs.message_dialog import MessageDialog
 
 class LocationViewMode(Enum):
     DETAILS = auto()
@@ -47,10 +46,35 @@ class LocationScreen(BaseScreen):
         
         self.refresh_children()
         
+        self.confirm_dialog = ConfirmDialog()
+        self.message_dialog = MessageDialog(
+            "",
+            ""
+        )
+        
     def handle_event(
         self,
         event
     ):
+        if self.message_dialog.visible:
+            self.message_dialog.handle_event(
+                event
+            )
+            return
+        
+        if self.confirm_dialog.visible:
+            action = (
+                self.confirm_dialog
+                .handle_event(
+                    event
+                )
+            )
+            
+            if action == "cancel":
+                self.confirm_dialog.close()
+            
+            return
+            
         super().handle_event(
             event
         )
@@ -114,6 +138,10 @@ class LocationScreen(BaseScreen):
                 LocationViewMode.EDIT_FORM
             )
             
+            return
+        
+        if action == "delete_location":
+            self.request_delete_location()
             return
         
         if action == "new_child":
@@ -223,6 +251,14 @@ class LocationScreen(BaseScreen):
                 self.children
             )
         
+        self.message_dialog.render(
+            screen
+        )
+        
+        self.confirm_dialog.render(
+            screen
+        )
+        
     def refresh_children(self):
         if self.location.id is None:
             self.children = []
@@ -331,4 +367,48 @@ class LocationScreen(BaseScreen):
         
         self.view_mode = (
             LocationViewMode.DETAILS
+        )
+
+    def request_delete_location(self):
+        if self.location.id is None:
+            return
+        
+        children = (
+            self.app
+            .location_repository
+            .get_children(
+                self.location.id
+            )
+        )
+        
+        if children:
+            child_count = len(
+                children
+            )
+            
+            child_label = (
+                "sublocal"
+                if child_count == 1
+                else "sublocais"
+            )
+            
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                (
+                    f'"{self.location.name}" possui '
+                    f"{child_count} {child_label}."
+                )
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.confirm_dialog.open(
+            "Excluir local?",
+            (
+                f'Tem certeza que deseja excluir '
+                f'"{self.location.name}"?'
+            ),
+            "Esta ação não pode ser desfeita.",
+            "Excluir"
         )
