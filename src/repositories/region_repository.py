@@ -165,3 +165,54 @@ class RegionRepository:
         self.database.connection.commit()
         
         return region
+    
+    def delete(
+        self,
+        region
+    ):
+        if region.id is None:
+            raise ValueError(
+                "Não é possível excluir "
+                "uma região sem ID."
+            )
+
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM locations
+            WHERE region_id = ?
+            LIMIT 1
+            """,
+            (
+                region.id,
+            )
+        )
+
+        has_locations = (
+            cursor.fetchone()
+            is not None
+        )
+
+        if has_locations:
+            raise ValueError(
+                "Não é possível excluir esta região "
+                "porque ela possui locais."
+            )
+
+        cursor.execute(
+            """
+            DELETE FROM regions
+            WHERE id = ?
+            """,
+            (
+                region.id,
+            )
+        )
+
+        self.database.connection.commit()
