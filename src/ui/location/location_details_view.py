@@ -38,6 +38,14 @@ class LocationDetailsView:
             "+ Novo Sublocal"
         )
         
+        self.edit_button = Button(
+            940,
+            200,
+            180,
+            45,
+            "Editar Local"
+        )
+        
         self.children_view = LocationChildrenView()
 
     def handle_event(
@@ -48,6 +56,11 @@ class LocationDetailsView:
             event
         ):
             return "back", None
+        
+        if self.edit_button.handle_event(
+            event
+        ):
+            return "edit_location", None
         
         if self.new_child_button.handle_event(
             event
@@ -73,6 +86,10 @@ class LocationDetailsView:
         children
     ):
         self.back_button.render(
+            screen
+        )
+        
+        self.edit_button.render(
             screen
         )
 
