@@ -234,3 +234,47 @@ class LocationRepository:
             )
 
         return locations
+
+    def update(
+        self,
+        location
+    ):
+        if location.id is None:
+            raise ValueError(
+                "Não é possível atualizar "
+                "um local sem ID."
+            )
+        
+        self._validate_parent(
+            location
+        )
+        
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
+        
+        cursor.execute(
+            """
+            UPDATE locations
+            SET
+                name = ?,
+                location_type = ?,
+                description = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                location.name,
+                location.location_type.value,
+                location.description,
+                location.notes,
+                location.id
+            )
+        )
+        
+        self.database.connection.commit()
+        
+        return location
