@@ -278,3 +278,41 @@ class LocationRepository:
         self.database.connection.commit()
         
         return location
+    
+    def delete(
+        self,
+        location
+    ):
+        if location.id is None:
+            raise ValueError(
+                "Não é possível excluir "
+                "um local sem ID."
+            )
+            
+        children = self.get_children(
+            location.id
+        )
+        
+        if children:
+            raise ValueError(
+                "Não é possível excluir este local "
+                "porque ele possui sublocais."
+            )
+            
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
+        
+        cursor.execute(
+            """
+            DELETE FROM locations
+            WHERE id = ?
+            """,
+            (
+                location.id,
+            )
+        )
+        
+        self.database.connection.commit()
