@@ -9,6 +9,9 @@ from src.ui.region.region_form import RegionForm
 
 from src.ui.location.location_form import LocationForm
 
+from src.ui.dialogs.confirm_dialog import ConfirmDialog
+from src.ui.dialogs.message_dialog import MessageDialog
+
 class RegionViewMode(Enum):
     DETAILS = auto()
     REGION_FORM = auto()
@@ -36,11 +39,36 @@ class RegionScreen(BaseScreen):
         self.view_mode = RegionViewMode.DETAILS
 
         self.refresh_locations()
+        
+        self.confirm_dialog = ConfirmDialog()
+        self.message_dialog = MessageDialog(
+            "",
+            ""
+        )
 
     def handle_event(
         self,
         event
     ):
+        if self.message_dialog.visible:
+            self.message_dialog.handle_event(
+                event
+            )
+            return
+        
+        if self.confirm_dialog.visible:
+            action = (
+                self.confirm_dialog
+                .handle_event(
+                    event
+                )
+            )
+            
+            if action == "cancel":
+                self.confirm_dialog.close()
+                
+            return
+        
         super().handle_event(
             event
         )
@@ -107,6 +135,10 @@ class RegionScreen(BaseScreen):
                 RegionViewMode.REGION_FORM
             )
             
+            return
+        
+        if action == "delete_region":
+            self.request_delete_region()
             return
         
         if action == "back":
@@ -248,6 +280,14 @@ class RegionScreen(BaseScreen):
                 self.locations
             )
             
+        self.message_dialog.render(
+            screen
+        )
+        
+        self.confirm_dialog.render(
+            screen
+        )
+            
     def select_location(
         self,
         location
@@ -295,4 +335,48 @@ class RegionScreen(BaseScreen):
         
         self.view_mode = (
             RegionViewMode.DETAILS
+        )
+        
+    def request_delete_region(self):
+        if self.region.id is None:
+            return
+        
+        locations = (
+            self.app
+            .location_repository
+            .get_all_by_region(
+                self.region.id
+            )
+        )
+        
+        if locations:
+            location_count = len(
+                locations
+            )
+            
+            locations_label = (
+                "local"
+                if location_count == 1
+                else "locais"
+            )
+            
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                (
+                    f'"{self.region.name}" possui '
+                    f"{location_count} {locations_label}"
+                )
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.confirm_dialog.open(
+            "Excluir região?",
+            (
+                f'Tem certeza que deseja excluir '
+                f'"{self.region.name}"?'
+            ),
+            "Esta ação não pode ser desfeita.",
+            "Excluir"
         )

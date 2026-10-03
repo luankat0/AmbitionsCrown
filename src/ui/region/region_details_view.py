@@ -45,6 +45,14 @@ class RegionDetailsView:
             "Editar Região"
         )
         
+        self.delete_button = Button(
+            940,
+            255,
+            180,
+            45,
+            "Excluir Região"
+        )
+        
         self.location_tree_view = (
             LocationTreeView()
         )
@@ -62,6 +70,11 @@ class RegionDetailsView:
             event
         ):
             return "edit_region", None
+        
+        if self.delete_button.handle_event(
+            event
+        ):
+            return "delete_region", None
         
         if self.new_location_button.handle_event(
             event
@@ -91,6 +104,10 @@ class RegionDetailsView:
         )
         
         self.edit_button.render(
+            screen
+        )
+        
+        self.delete_button.render(
             screen
         )
         
