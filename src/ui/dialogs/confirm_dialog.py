@@ -6,7 +6,11 @@ from src.ui.dialogs.base_dialog import BaseDialog
 
 class ConfirmDialog(BaseDialog):
     def __init__(self):
-        super().__init__("")
+        super().__init__(
+            "",
+            width=480,
+            height=240
+        )
                 
         self.message: str = ""
         self.warning: str = ""
@@ -35,6 +39,24 @@ class ConfirmDialog(BaseDialog):
             140,
             45,
             "Confirmar"
+        )
+        
+        self.background_color = (
+            36,
+            36,
+            44
+        )
+        
+        self.border_color = (
+            90,
+            90,
+            105
+        )
+        
+        self.title_color = (
+            240,
+            240,
+            240
         )
         
     def open(
@@ -69,59 +91,16 @@ class ConfirmDialog(BaseDialog):
         
         return None
     
-    def render(self, screen):
-        if not self.visible:
+    def render(
+        self, 
+        screen
+    ):
+        modal_rect = self.render_base(
+            screen
+        )
+        
+        if modal_rect is None:
             return
-        
-        overlay = pygame.Surface(
-            screen.get_size(),
-            pygame.SRCALPHA
-        )
-        
-        overlay.fill(
-            (0, 0, 0, 150)
-        )
-        
-        screen.blit(
-            overlay, 
-            (0, 0)
-        )
-        
-        modal_rect = pygame.Rect(
-            420,
-            250,
-            480,
-            240
-        )
-        
-        pygame.draw.rect(
-            screen,
-            (36, 36, 44),
-            modal_rect,
-            border_radius=10
-        )
-        
-        pygame.draw.rect(
-            screen,
-            (90, 90, 105),
-            modal_rect,
-            width=2,
-            border_radius=10
-        )
-        
-        title_surface = self.title_font.render(
-            self.title,
-            True,
-            (240, 240, 240)
-        )
-        
-        screen.blit(
-            title_surface,
-            (
-                modal_rect.x + 30,
-                modal_rect.y + 25
-            )
-        )
         
         message_surface = self.info_font.render(
             self.message,
@@ -151,5 +130,26 @@ class ConfirmDialog(BaseDialog):
                     modal_rect.y + 125
                 )
             )
-        self.cancel_button.render(screen)
-        self.confirm_button.render(screen)
+            
+        self.cancel_button.rect.x = (
+            modal_rect.x + 80
+        )
+        
+        self.cancel_button.rect.y = (
+            modal_rect.bottom - 90
+        )
+        
+        self.confirm_button.rect.x = (
+            modal_rect.x + 240
+        )
+        
+        self.confirm_button.rect.y = (
+            modal_rect.bottom - 90
+        )
+        
+        self.cancel_button.render(
+            screen
+        )
+        self.confirm_button.render(
+            screen
+        )
