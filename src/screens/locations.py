@@ -72,6 +72,11 @@ class LocationScreen(BaseScreen):
             
             if action == "cancel":
                 self.confirm_dialog.close()
+                return
+            
+            if action == "confirm":
+                self.confirm_delete_location()
+                return
             
             return
             
@@ -411,4 +416,47 @@ class LocationScreen(BaseScreen):
             ),
             "Esta ação não pode ser desfeita.",
             "Excluir"
+        )
+
+    def confirm_delete_location(self):
+        parent_id = (
+            self.location
+            .parent_location_id
+        )
+        
+        self.confirm_dialog.close()
+        
+        try:
+            self.app.location_repository.delete(
+                self.location
+            )
+        
+        except ValueError as error:
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                str(error)
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        if parent_id is None:
+            self.return_to_region()
+            return
+        
+        parent = (
+            self.app
+            .location_repository
+            .get_by_id(
+                parent_id
+            )
+        )
+        
+        if parent is None:
+            self.return_to_region()
+            return
+        
+        self.app.open_location(
+            self.region,
+            parent
         )
