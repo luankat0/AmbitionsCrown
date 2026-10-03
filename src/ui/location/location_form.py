@@ -82,6 +82,9 @@ class LocationForm(BaseForm):
             self.description_input,
             self.notes_input,
         ]
+        
+        self.mode = "create"
+        self.editing_location_id = None
 
         self.location_types = list(
             LocationType
@@ -176,6 +179,7 @@ class LocationForm(BaseForm):
             return None
         
         return Location(
+            id=self.editing_location_id,
             region_id=region_id,
             parent_location_id=(
                 parent_location_id
@@ -199,6 +203,9 @@ class LocationForm(BaseForm):
     def prepare_create(self):
         super().prepare_create()
         
+        self.mode = "create"
+        self.editing_location_id = None
+        
         self.location_type_index = (
             self.location_types.index(
                 LocationType.OTHER
@@ -206,6 +213,10 @@ class LocationForm(BaseForm):
         )
         
         self._update_type_button()
+        
+        self.submit_button.text = (
+            "Criar Local"
+        )
         
     def render(
     self,
@@ -313,3 +324,51 @@ class LocationForm(BaseForm):
         self.submit_button.render(
             screen
         )
+        
+    def prepare_edit(
+        self,
+        location
+    ):
+        self.clear()
+        
+        self.mode = "edit"
+        self.editing_location_id = (
+            location.id
+        )
+        
+        self.name_input.text = (
+            location.name
+        )
+        
+        self.name_input.cursor_index = len(
+            location.name
+        )
+
+        self.description_input.text = (
+            location.description
+        )
+        
+        self.description_input.cursor_index = len(
+            location.description
+        )
+        
+        self.notes_input.text = (
+            location.notes
+        )
+        
+        self.notes_input.cursor_index = len(
+            location.notes
+        )
+        
+        self.location_types_index = (
+            self.location_types.index(
+                location.location_type
+            )
+        )
+        
+        self._update_type_button()
+        
+        self.submit_button.text = "Salvar"
+        
+        self._set_focus(0)
+    

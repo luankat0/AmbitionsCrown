@@ -13,6 +13,7 @@ from src.ui.location.location_form import (
 
 class LocationViewMode(Enum):
     DETAILS = auto()
+    EDIT_FORM = auto()
     CHILD_FORM = auto()
 
 
@@ -38,7 +39,7 @@ class LocationScreen(BaseScreen):
             LocationDetailsView()
         )
         
-        self.child_form = LocationForm()
+        self.location_form = LocationForm()
         
         self.view_mode = (
             LocationViewMode.DETAILS
@@ -58,14 +59,23 @@ class LocationScreen(BaseScreen):
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
-            if (
-                self.view_mode
-                == LocationViewMode.CHILD_FORM
+            if self.view_mode in (
+                LocationViewMode.EDIT_FORM,
+                LocationViewMode.CHILD_FORM
             ):
-                self.cancel_child_form()
+                self.cancel_location_form()
                 return
             
             self.navigate_back()
+            return
+        
+        if (
+            self.view_mode
+            == LocationViewMode.EDIT_FORM
+        ):
+            self.handle_edit_form_events(
+                event
+            )
             return
         
         if (
@@ -95,8 +105,19 @@ class LocationScreen(BaseScreen):
             self.navigate_back()
             return
         
+        if action == "edit_location":
+            self.location_form.prepare_edit(
+                self.location
+            )
+            
+            self.view_mode = (
+                LocationViewMode.EDIT_FORM
+            )
+            
+            return
+        
         if action == "new_child":
-            self.child_form.prepare_create()
+            self.location_form.prepare_create()
             
             self.view_mode = (
                 LocationViewMode.CHILD_FORM
@@ -119,21 +140,21 @@ class LocationScreen(BaseScreen):
         event
     ):
         action = (
-            self.child_form.handle_event(
+            self.location_form.handle_event(
                 event
             )
         )
         
         if action == "cancel":
-            self.cancel_child_form()
+            self.cancel_location_form()
             return
         
         if action == "submit":
             self.create_child()
             return
         
-    def cancel_child_form(self):
-        self.child_form.clear()
+    def cancel_location_form(self):
+        self.location_form.clear()
         
         self.view_mode = (
             LocationViewMode.DETAILS
@@ -147,7 +168,8 @@ class LocationScreen(BaseScreen):
             return
         
         child = (
-            self.child_form.build_location(
+            self.location_form
+            .build_location(
                 region_id=self.region.id,
                 parent_location_id=(
                     self.location.id
@@ -164,7 +186,7 @@ class LocationScreen(BaseScreen):
         
         self.refresh_children()
         
-        self.child_form.clear()
+        self.location_form.clear()
         
         self.view_mode = (
             LocationViewMode.DETAILS
@@ -186,11 +208,11 @@ class LocationScreen(BaseScreen):
             screen
         )
         
-        if (
-            self.view_mode
-            == LocationViewMode.CHILD_FORM
+        if self.view_mode in (
+            LocationViewMode.EDIT_FORM,
+            LocationViewMode.CHILD_FORM,
         ):
-            self.child_form.render(
+            self.location_form.render(
                 screen
             )
         
@@ -248,4 +270,65 @@ class LocationScreen(BaseScreen):
         self.app.open_location(
             self.region,
             parent
+        )
+
+    def handle_edit_form_events(
+        self,
+        event
+    ):
+        action = (
+            self.location_form.handle_event(
+                event
+            )
+        )
+        
+        if action == "cancel":
+            self.cancel_location_form()
+            return
+        
+        if action == "submit":
+            self.update_location()
+            return
+        
+    def update_location(self):
+        updated_location = (
+            self.location_form.build_location(
+                region_id=self.location.region_id,
+                parent_location_id=(
+                    self.location
+                    .parent_location_id
+                )
+            )
+        )
+        
+        if updated_location is None:
+            return
+        
+        self.app.location_repository.update(
+            updated_location
+        )
+        
+        refreshed_location = (
+            self.app
+            .location_repository
+            .get_by_id(
+                updated_location.id
+            )
+        )
+        
+        if refreshed_location is not None:
+            self.location = (
+                refreshed_location
+            )
+        else:
+            self.location = (
+                updated_location
+            )
+        
+        self.refresh_children()
+        
+        self.location_form.clear()
+        
+        self.view_mode = (
+            LocationViewMode.DETAILS
         )
