@@ -37,6 +37,13 @@ class RegionDetailsView:
             45,
             "+ Novo Local"
         )
+        self.edit_button = Button(
+            940,
+            200,
+            180,
+            45,
+            "Editar Região"
+        )
         
         self.location_tree_view = (
             LocationTreeView()
@@ -50,6 +57,11 @@ class RegionDetailsView:
             event
         ):
             return "back", None
+        
+        if self.edit_button.handle_event(
+            event
+        ):
+            return "edit_region", None
         
         if self.new_location_button.handle_event(
             event
@@ -75,6 +87,10 @@ class RegionDetailsView:
         locations
     ):
         self.back_button.render(
+            screen
+        )
+        
+        self.edit_button.render(
             screen
         )
         

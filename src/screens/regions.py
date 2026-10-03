@@ -5,10 +5,13 @@ from enum import Enum, auto
 from src.screens.base_screen import BaseScreen
 
 from src.ui.region.region_details_view import RegionDetailsView
+from src.ui.region.region_form import RegionForm
+
 from src.ui.location.location_form import LocationForm
 
 class RegionViewMode(Enum):
     DETAILS = auto()
+    REGION_FORM = auto()
     LOCATION_FORM = auto()
 
 class RegionScreen(BaseScreen):
@@ -25,8 +28,10 @@ class RegionScreen(BaseScreen):
         self.region = region
         self.locations = []
         
-        self.location_form = LocationForm()
         self.details_view = RegionDetailsView()
+        
+        self.region_form = RegionForm()
+        self.location_form = LocationForm()
                 
         self.view_mode = RegionViewMode.DETAILS
 
@@ -46,12 +51,28 @@ class RegionScreen(BaseScreen):
         ):
             if (
                 self.view_mode
+                == RegionViewMode.REGION_FORM
+            ):
+                self.cancel_region_form()
+                return
+            
+            if (
+                self.view_mode
                 == RegionViewMode.LOCATION_FORM
             ):
                 self.cancel_location_form()
                 return
             
             self.return_to_world()
+            return
+        
+        if (
+            self.view_mode
+            == RegionViewMode.REGION_FORM
+        ):
+            self.handle_region_form_events(
+                event
+            )
             return
         
         if (
@@ -77,6 +98,17 @@ class RegionScreen(BaseScreen):
             )
         )
         
+        if action == "edit_region":
+            self.region_form.prepare_edit(
+                self.region
+            )
+            
+            self.view_mode = (
+                RegionViewMode.REGION_FORM
+            )
+            
+            return
+        
         if action == "back":
             self.return_to_world()
             return
@@ -97,6 +129,24 @@ class RegionScreen(BaseScreen):
             self.select_location(
                 location
             )
+    
+    def handle_region_form_events(
+        self,
+        event
+    ):
+        action = (
+            self.region_form.handle_event(
+                event
+            )
+        )
+        
+        if action == "cancel":
+            self.cancel_region_form()
+            return
+        
+        if action == "submit":
+            self.update_region()
+            return
     
     def handle_location_form_events(
         self,
@@ -174,8 +224,16 @@ class RegionScreen(BaseScreen):
         super().render(
             screen
         )
-
+        
         if (
+            self.view_mode
+            == RegionViewMode.REGION_FORM
+        ):
+            self.region_form.render(
+                screen
+            )
+
+        elif (
             self.view_mode
             == RegionViewMode.LOCATION_FORM
         ):
@@ -197,4 +255,44 @@ class RegionScreen(BaseScreen):
         self.app.open_location(
             self.region,
             location
+        )
+
+    def cancel_region_form(self):
+        self.region_form.clear()
+        
+        self.view_mode = (
+            RegionViewMode.DETAILS
+        )
+        
+    def update_region(self):
+        updated_region = (
+            self.region_form.build_region(
+                self.region.world_id
+            )
+        )
+        
+        if updated_region is None:
+            return
+        
+        self.app.region_repository.update(
+            updated_region
+        )
+        
+        refreshed_region = (
+            self.app
+            .region_repository
+            .get_by_id(
+                updated_region.id
+            )
+        )
+        
+        if refreshed_region is not None:
+            self.region = refreshed_region
+        else:
+            self.region = updated_region
+            
+        self.region_form.clear()
+        
+        self.view_mode = (
+            RegionViewMode.DETAILS
         )
