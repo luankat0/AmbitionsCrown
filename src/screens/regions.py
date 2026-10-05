@@ -67,6 +67,10 @@ class RegionScreen(BaseScreen):
             if action == "cancel":
                 self.confirm_dialog.close()
                 
+            if action == "confirm":
+                self.confirm_delete_region()
+                return
+                
             return
         
         super().handle_event(
@@ -380,3 +384,22 @@ class RegionScreen(BaseScreen):
             "Esta ação não pode ser desfeita.",
             "Excluir"
         )
+
+    def confirm_delete_region(self):
+        self.confirm_dialog.close()
+        
+        try:
+            self.app.region_repository.delete(
+                self.region
+            )
+            
+        except ValueError as error:
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                str(error)
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.return_to_world()
