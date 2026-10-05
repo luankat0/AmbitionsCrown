@@ -115,6 +115,36 @@ class Database:
             """
         )
         
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS factions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                world_id INTEGER NOT NULL,
+
+                name TEXT NOT NULL,
+
+                faction_type TEXT NOT NULL
+                    DEFAULT 'other',
+
+                status TEXT NOT NULL
+                    DEFAULT 'active',
+
+                description TEXT NOT NULL
+                    DEFAULT '',
+
+                notes TEXT NOT NULL
+                    DEFAULT '',
+
+                created_at TEXT NOT NULL
+                    DEFAULT CURRENT_TIMESTAMP,
+
+                updated_at TEXT NOT NULL
+                    DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        
         self.connection.commit()
         
     def close(self):

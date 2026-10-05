@@ -9,6 +9,7 @@ from src.repositories.campaign_repository import CampaignRepository
 from src.repositories.world_repository import WorldRepository
 from src.repositories.region_repository import RegionRepository
 from src.repositories.location_repository import LocationRepository
+from src.repositories.faction_repository import FactionRepository
 
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
@@ -41,6 +42,10 @@ class App:
         )
         
         self.location_repository = LocationRepository(
+            self.database
+        )
+        
+        self.faction_repository = FactionRepository(
             self.database
         )
         
@@ -91,7 +96,6 @@ class App:
         
         action()
         
-
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
