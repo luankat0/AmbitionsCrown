@@ -104,3 +104,122 @@ class WorldRepository:
             updated_at=row["updated_at"]
         )
         
+    def delete(
+        self,
+        world
+    ):
+        if world.id is None:
+            raise ValueError(
+                "Não é possível excluir "
+                "um mundo sem ID."
+            )
+        
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
+        
+        cursor.execute(
+            """
+            SELECT 1
+            FROM regions
+            WHERE world_id = ?
+            LIMIT 1
+            """,
+            (
+                world.id,
+            )
+        )
+        
+        has_regions = (
+            cursor.fetchone()
+            is not None
+        )
+        
+        if has_regions:
+            raise ValueError(
+                "Não é possível excluir este mundo "
+                "porque ele possui regiôes."
+            )
+        
+        cursor.execute(
+            """
+            SELECT 1
+            FROM campaigns
+            WHERE world_id = ?
+            LIMIT 1
+            """,
+            (
+                world.id,
+            )
+        )
+        
+        is_used_by_campaign = (
+            cursor.fetchone()
+            is not None
+        )
+        
+        if is_used_by_campaign:
+            raise ValueError(
+                "Não é possível excluir este mundo "
+                "porque ele está sendo usado "
+                "por uma campanha."
+            )
+        
+        cursor.execute(
+            """
+            DELETE FROM worlds
+            WHERE id = ?
+            """,
+            (
+                world.id,
+            )
+        )
+        
+        self.database.connection.commit()
+
+
+        
+        if has_regions:
+            raise ValueError(
+                "Não é possível excluir este mundo "
+                "porque ele possui regiôes."
+            )
+        
+        cursor.execute(
+            """
+            SELECT 1
+            FROM campaigns
+            WHERE world_id = ?
+            LIMIT 1
+            """,
+            (
+                world.id,
+            )
+        )
+        
+        is_used_by_campaign = (
+            cursor.fetchone()
+            is not None
+        )
+        
+        if is_used_by_campaign:
+            raise ValueError(
+                "Não é possível excluir este mundo "
+                "porque ele está sendo usado "
+                "por uma campanha."
+            )
+        
+        cursor.execute(
+            """
+            DELETE FROM worlds
+            WHERE id = ?
+            """,
+            (
+                world.id,
+            )
+        )
+        
+        self.database.connection.commit()
+
