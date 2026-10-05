@@ -184,7 +184,7 @@ class WorldRepository:
         if has_regions:
             raise ValueError(
                 "Não é possível excluir este mundo "
-                "porque ele possui regiôes."
+                "porque ele possui regiões."
             )
         
         cursor.execute(
