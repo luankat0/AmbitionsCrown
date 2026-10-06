@@ -56,6 +56,16 @@ class CampaignScreen:
         
         self.card_rects = []
         
+        self.scroll_offset = 0
+        self.scroll_speed = 40
+        
+        self.list_rect = pygame.Rect(
+            60,
+            180,
+            560,
+            500
+        )
+        
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -69,6 +79,21 @@ class CampaignScreen:
             self.handle_list_events(event)
     
     def handle_list_events(self, event):
+        if event.type == pygame.MOUSEWHEEL:
+            mouse_pos = pygame.mouse.get_pos()
+            
+            if self.list_rect.collidepoint(
+                mouse_pos
+            ):
+                self.scroll_offset -= (
+                    event.y
+                    * self.scroll_speed
+                )
+                
+                self._clamp_scroll()
+                
+                return
+        
         if self.new_campaign_button.handle_event(
             event
         ):
@@ -83,6 +108,9 @@ class CampaignScreen:
         if (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
+            and self.list_rect.collidepoint(
+                event.pos
+            )
         ):
             for campaign, rect in self.card_rects:
                 if rect.collidepoint(
@@ -130,6 +158,8 @@ class CampaignScreen:
             0,
             campaign
         )
+        
+        self.scroll_offset = 0
         
         self.form.clear()
         
@@ -186,7 +216,16 @@ class CampaignScreen:
             
             return
         
-        y = 190
+        y = (
+            190
+            - self.scroll_offset 
+        )
+        
+        previous_clip = screen.get_clip()
+        
+        screen.set_clip(
+            self.list_rect
+        )
         
         for campaign in self.campaigns:
             card_rect = pygame.Rect(
@@ -250,6 +289,10 @@ class CampaignScreen:
             
             y += 110
             
+        screen.set_clip(
+            previous_clip
+        )
+            
     def _get_status_label(
         self,
         status: CampaignStatus
@@ -282,3 +325,35 @@ class CampaignScreen:
         self.view_mode = (
             CampaignViewMode.LIST
         )
+
+    def _clamp_scroll(self):
+        if not self.campaigns:
+            self.scroll_offset = 0
+            return
+        
+        card_height = 90
+        card_spacing = 20
+        
+        content_height = (
+            len(self.campaigns)
+            * (
+                card_height
+                + card_spacing
+            )
+            - card_spacing
+        )
+        
+        max_scroll = max(
+            0,
+            content_height
+            - self.list_rect.height
+        )
+        
+        self.scroll_offset = max(
+            0,
+            min(
+                self.scroll_offset,
+                max_scroll
+            )
+        )
+
