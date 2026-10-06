@@ -25,17 +25,21 @@ FACTION_STATUS_LABELS = {
 }
 
 def get_faction_type_label(
-    faction_type
-):
-    return FACTION_TYPE_LABELS.get(
-        faction_type,
-        faction_type.value
+    faction_type: FactionType
+) -> str:
+    return (
+        FACTION_TYPE_LABELS.get(
+            faction_type
+        ) 
+        or faction_type.value
     )
     
 def get_faction_status_label(
-    faction_status
-):
-    return FACTION_STATUS_LABELS.get(
-        faction_status,
-        faction_status.value
+    faction_status: FactionStatus
+) -> str:
+    return (
+        FACTION_STATUS_LABELS.get(
+            faction_status
+        )
+        or faction_status.value
     )
