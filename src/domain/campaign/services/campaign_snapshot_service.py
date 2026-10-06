@@ -14,6 +14,7 @@ from src.domain.campaign.models.campaign_location import (
 class CampaignSnapshotService:
     def __init__(
         self,
+        campaign_repository,
         faction_repository,
         campaign_faction_repository,
         region_repository,
@@ -21,6 +22,10 @@ class CampaignSnapshotService:
         location_repository,
         campaign_location_repository
     ):
+        self.campaign_repository = (
+            campaign_repository
+        )
+        
         self.faction_repository = (
             faction_repository
         )
@@ -332,3 +337,53 @@ class CampaignSnapshotService:
             )
         
         return created_locations
+
+    def create_initial_snapshot(
+        self,
+        campaign
+    ):
+        if campaign.id is None:
+            raise ValueError(
+                "Não é possível inicializar "
+                "uma campanha sem ID."
+            )
+            
+        if campaign.world_id is None:
+            raise ValueError(
+                "A campanha precisa possuir "
+                "um mundo antes do snapshot."
+            )
+            
+        if campaign.snapshot_created_at is not None:
+            raise ValueError(
+                "Esta campanha já possui "
+                "um snapshot inicial."
+            )
+            
+        created_regions = (
+            self.snapshot_regions(
+                campaign
+            )
+        )
+        
+        created_locations = (
+            self.snapshot_locations(
+                campaign
+            )
+        )
+        
+        created_factions = (
+            self.snapshot_factions(
+                campaign
+            )
+        )
+        
+        self.campaign_repository.mark_snapshot_created(
+            campaign
+        )
+        
+        return {
+            "regions": created_regions,
+            "locations": created_locations,
+            "factions": created_factions,
+        }

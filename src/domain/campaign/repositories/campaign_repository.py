@@ -117,3 +117,54 @@ class CampaignRepository:
         self.database.connection.commit()
 
         return campaign
+
+    def mark_snapshot_created(
+        self,
+        campaign
+    ):
+        if campaign.id is None:
+            raise ValueError(
+                "Não é possível marcar o snapshot "
+                "de uma campanha sem ID."
+            )
+            
+        cursor = self.database.connection.cursor()
+        
+        cursor.execute(
+            """
+            UPDATE campaigns
+            SET
+                snapshot_created_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                campaign.id,
+            )
+        )
+        
+        cursor.execute(
+            """
+            SELECT snapshot_created_at
+            FROM campaigns
+            WHERE id = ?
+            """,
+            (
+                campaign.id,
+            )
+        )
+        
+        row = cursor.fetchone()
+        
+        self.database.connection.commit()
+        
+        if row is None:
+            raise ValueError(
+                "A campanha informada não existe."
+            )
+            
+        campaign.snapshot_created_at = (
+            row["snapshot_created_at"]
+        )
+        
+        return campaign

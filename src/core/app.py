@@ -80,6 +80,7 @@ class App:
         )
         
         self.campaign_snapshot_service = CampaignSnapshotService(
+            self.campaign_repository,
             self.faction_repository,
             self.campaign_faction_repository,
             self.region_repository,
