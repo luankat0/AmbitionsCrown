@@ -92,6 +92,9 @@ class FactionForm(BaseForm):
             self.description_input,
             self.notes_input,
         ]
+        
+        self.edit_faction_id = None
+        self.title_text = "Nova Facção"
 
         self.faction_types = list(
             FactionType
@@ -228,6 +231,7 @@ class FactionForm(BaseForm):
             return None
 
         return Faction(
+            id=self.editing_faction_id,
             world_id=world_id,
             name=self.name_input.text.strip(),
             faction_type=(
@@ -250,6 +254,9 @@ class FactionForm(BaseForm):
 
     def prepare_create(self):
         super().prepare_create()
+        
+        self.editing_faction_id = None
+        self.title_text = "Nova Facção"
 
         self.faction_type_index = (
             self.faction_types.index(
@@ -270,13 +277,61 @@ class FactionForm(BaseForm):
             "Criar Facção"
         )
 
+    def prepare_edit(
+        self,
+        faction
+    ):
+        self.clear()
+        
+        self.editing_faction_id = faction.id
+        self.title_text = "Editar Facção"
+        
+        self.name_input.text = faction.name
+        self.description_input.text = (
+            faction.description
+        )
+        self.notes_input.text = (
+            faction.notes
+        )
+        
+        self.name_input.cursor_index = len(
+            self.name_input.text
+        )
+        
+        self.description_input.cursor_index = len(
+            self.description_input.text
+        )
+        
+        self.notes_input.cursor_index = len(
+            self.notes_input.text
+        )
+        
+        self.faction_type_index = (
+            self.faction_types.index(
+                faction.faction_type
+            )
+        )
+        
+        self.faction_status_index = (
+            self.faction_statuses.index(
+                faction.status
+            )
+        )
+        
+        self._update_type_button()
+        self._update_status_button()
+        
+        self.submit_button.text = "Salvar"
+        
+        self._set_focus(0)
+
     def render(
         self,
         screen
     ):
         title_surface = (
             self.title_font.render(
-                "Nova Facção",
+                self.title_text,
                 True,
                 (240, 240, 245)
             )
