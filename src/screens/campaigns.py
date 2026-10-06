@@ -6,6 +6,9 @@ from src.domain.campaign.models.campaign import CampaignStatus
 
 from src.ui.button import Button
 from src.ui.campaign.campaign_form import CampaignForm
+from src.ui.campaign.campaign_setup_dialog import (
+    CampaignSetupDialog,
+)
 
 class CampaignViewMode(Enum):
     LIST = auto()
@@ -46,6 +49,11 @@ class CampaignScreen:
         
         self.form = CampaignForm()
         
+        self.setup_dialog = CampaignSetupDialog()
+        
+        self.setup_campaign = None
+        self.setup_world = None
+        
         self.new_campaign_button = Button(
             80,
             110,
@@ -67,6 +75,12 @@ class CampaignScreen:
         )
         
     def handle_event(self, event):
+        if self.setup_dialog.visible:
+            self.handle_setup_dialog_event(
+                event
+            )
+            return
+        
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 if self.view_mode == CampaignViewMode.FORM:
@@ -77,6 +91,45 @@ class CampaignScreen:
             self.handle_form_events(event)
         else:
             self.handle_list_events(event)
+    
+    def handle_setup_dialog_event(
+        self,
+        event
+    ):
+        action, world = (
+            self.setup_dialog.handle_event(
+                event
+            )
+        )
+        
+        if action == "cancel":
+            self.setup_dialog.close()
+            
+            self.setup_campaign = None
+            self.setup_world = None
+            
+            return
+        
+        if (
+            action == "confirm"
+            and world is not None
+        ):
+            self.setup_world = world
+            
+            # TODO: Remover depois os prints
+            print(
+                "Campaign:",
+                self.setup_campaign.name
+                if self.setup_campaign is not None
+                else None
+            )
+            
+            print(
+                "World selecionado:",
+                world.name
+            )
+            
+            return
     
     def handle_list_events(self, event):
         if event.type == pygame.MOUSEWHEEL:
@@ -116,12 +169,8 @@ class CampaignScreen:
                 if rect.collidepoint(
                     event.pos
                 ):
-                    self.app.select_campaign(
+                    self.open_campaign(
                         campaign
-                    )
-                    
-                    self.app.change_screen(
-                        "dashboard"
                     )
                     
                     return
@@ -179,6 +228,11 @@ class CampaignScreen:
             
         else:
             self.render_list(
+                screen
+            )
+            
+        if self.setup_dialog.visible:
+            self.setup_dialog.render(
                 screen
             )
     
@@ -355,5 +409,33 @@ class CampaignScreen:
                 self.scroll_offset,
                 max_scroll
             )
+        )
+
+    def open_campaign(
+        self,
+        campaign
+    ):
+        if campaign.snapshot_created_at is not None:
+            self.app.select_campaign(
+                campaign
+            )
+            
+            self.app.change_screen(
+                "dashboard"
+            )
+            return
+        
+        worlds = (
+            self.app
+            .world_repository
+            .get_all()
+        )
+        
+        self.setup_campaign = campaign
+        self.setup_world = None
+        
+        self.setup_dialog.open(
+            campaign,
+            worlds
         )
 
