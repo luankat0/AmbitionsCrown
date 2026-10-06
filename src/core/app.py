@@ -17,6 +17,7 @@ from src.screens.campaigns import CampaignScreen
 from src.screens.worlds import WorldScreen
 from src.screens.regions import RegionScreen
 from src.screens.locations import LocationScreen
+from src.screens.factions import FactionScreen
 
 class App:
     def __init__(self):
@@ -80,6 +81,9 @@ class App:
             
             "world":
                 self.open_world,
+                
+            "factions":
+                self.open_factions,
             
             "npcs":
                 self.open_npcs,
@@ -194,3 +198,12 @@ class App:
         self.current_screen = (
             NPCScreen(self)
         )
+
+    def open_factions(self):
+        if self.current_campaign is None:
+            return
+        
+        self.current_screen = FactionScreen(
+            self
+        )
+
