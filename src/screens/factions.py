@@ -2,10 +2,12 @@ import pygame
 
 from enum import Enum, auto
 
+from src.ui.button import Button
+
 from src.ui.faction.faction_form import FactionForm
+from src.ui.faction.faction_list_view import FactionListView
 
 from src.screens.base_screen import BaseScreen
-from src.ui.button import Button
 
 
 class FactionViewMode(Enum):
@@ -27,14 +29,7 @@ class FactionScreen(BaseScreen):
         )
         
         self.faction_form = FactionForm()
-        
-        self.new_faction_button = Button(
-            300,
-            160,
-            180,
-            45,
-            "+ Nova Facção"
-        )
+        self.list_view = FactionListView()
         
         self.title_font = pygame.font.Font(
             None,
@@ -111,9 +106,21 @@ class FactionScreen(BaseScreen):
             )
             return
         
-        if self.new_faction_button.handle_event(
+        self.handle_list_events(
             event
-        ):
+        )
+        
+    def handle_list_events(
+        self,
+        event
+    ):
+        action, faction = (
+            self.list_view.handle_event(
+                event
+            )
+        )
+        
+        if action == "new":
             self.faction_form.prepare_create()
             
             self.view_mode = (
@@ -121,6 +128,12 @@ class FactionScreen(BaseScreen):
             )
             
             return
+        
+        if (
+            action == "select"
+            and faction is not None
+        ):
+            return  
        
     def handle_faction_form_events(
         self,
@@ -156,6 +169,27 @@ class FactionScreen(BaseScreen):
         if campaign is None:
             return
         
+        if campaign.world_id is None:
+            self.render_without_world(
+                screen
+            )
+            return
+        
+        if self.view_mode == FactionViewMode.FORM:
+            self.faction_form.render(
+                screen
+            )
+            return
+        
+        self.list_view.render(
+            screen,
+            self.factions
+        )
+        
+    def render_without_world(
+        self,
+        screen
+    ):
         title_surface = (
             self.title_font.render(
                 "Facções",
@@ -169,26 +203,6 @@ class FactionScreen(BaseScreen):
             (300, 100)
         )
         
-        if campaign.world_id is None:
-            self.render_without_world(
-                screen
-            )
-            return
-        
-        if self.view_mode == FactionViewMode.FORM:
-            self.faction_form.render(
-                screen
-            )
-            return
-        
-        self.render_factions(
-            screen
-        )
-        
-    def render_without_world(
-        self,
-        screen
-    ):
         message_surface = (
             self.info_font.render(
                 (
@@ -224,48 +238,6 @@ class FactionScreen(BaseScreen):
             screen
         )
         
-    def render_factions(
-        self,
-        screen
-    ):
-        self.new_faction_button.render(
-            screen
-        )
-        
-        if not self.factions:
-            empty_surface = (
-                self.info_font.render(
-                    "Nenhuma facção criada ainda.",
-                    True,
-                    (150, 150, 160)
-                )
-            )
-        
-            screen.blit(
-                empty_surface,
-                (300, 240)
-            )
-            
-            return
-    
-        y = 240
-    
-        for faction in self.factions:
-            name_surface = (
-                self.info_font.render(
-                    faction.name,
-                    True,
-                    (220, 220, 230)
-                )
-            )
-            
-            screen.blit(
-                name_surface,
-                (300, y)
-            )
-            
-            y += 40
-
     def cancel_faction_form(self):
         self.faction_form.clear()
         
