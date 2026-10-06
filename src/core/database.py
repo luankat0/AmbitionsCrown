@@ -197,6 +197,34 @@ class Database:
             """
         )
         
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS campaign_locations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                campaign_id INTEGER NOT NULL,
+                region_id INTEGER NOT NULL,
+
+                parent_location_id INTEGER,
+                source_location_id INTEGER,
+
+                name TEXT NOT NULL,
+                location_type TEXT NOT NULL DEFAULT 'other',
+
+                description TEXT NOT NULL DEFAULT '',
+                notes TEXT NOT NULL DEFAULT '',
+
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                UNIQUE (
+                    campaign_id,
+                    source_location_id
+                )
+            )
+            """
+        )
+        
         self.connection.commit()
         
     def close(self):
