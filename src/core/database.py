@@ -172,6 +172,31 @@ class Database:
             """
         )
         
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS campaign_regions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                campaign_id INTEGER NOT NULL,
+                source_region_id INTEGER,
+
+                name TEXT NOT NULL,
+                region_type TEXT NOT NULL DEFAULT 'other',
+
+                description TEXT NOT NULL DEFAULT '',
+                notes TEXT NOT NULL DEFAULT '',
+
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                UNIQUE (
+                    campaign_id,
+                    source_region_id
+                )
+            )
+            """
+        )
+        
         self.connection.commit()
         
     def close(self):
