@@ -48,6 +48,8 @@ class CampaignSetupDialog(BaseDialog):
         
         self.world_rects = []
         
+        self.error_message = ""
+        
     @property
     def selected_world(self):
         if self.selected_world_index is None:
@@ -74,6 +76,7 @@ class CampaignSetupDialog(BaseDialog):
         
         self.scroll_index = 0
         self.selected_world_index = None
+        self.error_message = ""
         
         if self.worlds:
             self.selected_world_index = 0
@@ -101,6 +104,14 @@ class CampaignSetupDialog(BaseDialog):
         self.scroll_index = 0
         self.world_rects = []
         
+        self.error_message = ""
+    
+    def show_error(
+        self,
+        message
+    ):
+        self.error_message = message 
+
     def handle_event(
         self,
         event
@@ -129,6 +140,8 @@ class CampaignSetupDialog(BaseDialog):
                     event.pos
                 ):
                     self.selected_world_index = index
+                    self.error_message = ""
+                    
                     return None, None
         
         if self.cancel_button.handle_event(
@@ -363,3 +376,4 @@ class CampaignSetupDialog(BaseDialog):
             )
             
         self._clamp_scroll()
+
