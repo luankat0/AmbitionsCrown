@@ -5,11 +5,15 @@ from src.core.database import Database
 from src.domain.campaign.models.campaign import Campaign
 
 from src.repositories.npc_repository import NPCRepository
-from src.domain.campaign.repositories.campaign_repository import CampaignRepository
 from src.domain.world.repositories.world_repository import WorldRepository
 from src.domain.world.repositories.region_repository import RegionRepository
 from src.domain.world.repositories.location_repository import LocationRepository
 from src.domain.world.repositories.faction_repository import FactionRepository
+
+from src.domain.campaign.repositories.campaign_repository import CampaignRepository
+from src.domain.campaign.repositories.campaign_faction_repository import (
+    CampaignFactionRepository
+)
 
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
@@ -47,6 +51,10 @@ class App:
         )
         
         self.faction_repository = FactionRepository(
+            self.database
+        )
+        
+        self.campaign_faction_repository = CampaignFactionRepository(
             self.database
         )
         
