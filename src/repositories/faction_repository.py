@@ -146,3 +146,38 @@ class FactionRepository:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
+        
+    def update(self, faction):
+        if faction.id is None:
+            raise ValueError(
+                "Não é possível atualizar uma facção sem ID."
+            )
+
+        cursor = self.database.connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE factions
+            SET
+                name = ?,
+                faction_type = ?,
+                status = ?,
+                description = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                faction.name,
+                faction.faction_type.value,
+                faction.status.value,
+                faction.description,
+                faction.notes,
+                faction.id,
+            )
+        )
+
+        self.database.connection.commit()
+
+        return faction
+
