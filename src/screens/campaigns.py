@@ -114,19 +114,41 @@ class CampaignScreen:
             action == "confirm"
             and world is not None
         ):
-            self.setup_world = world
+            campaign = self.setup_campaign
             
-            # TODO: Remover depois os prints
-            print(
-                "Campaign:",
-                self.setup_campaign.name
-                if self.setup_campaign is not None
-                else None
+            if campaign is None:
+                return
+            
+            if campaign.world_id is None:
+                campaign.world_id = world.id
+                
+                self.app.campaign_repository.update(
+                    campaign
+                )
+            
+            elif campaign.world_id != world.id:
+                raise ValueError(
+                    "Não é possível trocar o mundo "
+                    "durante a inicialização da campanha."
+                )
+                
+            self.app.campaign_snapshot_service.create_initial_snapshot(
+                campaign
             )
             
-            print(
-                "World selecionado:",
-                world.name
+            self.setup_world = world
+            
+            self.setup_dialog.close()
+            
+            self.setup_campaign = None
+            self.setup_world = None
+            
+            self.app.select_campaign(
+                campaign
+            )
+            
+            self.app.change_screen(
+                "dashboard"
             )
             
             return
@@ -430,6 +452,13 @@ class CampaignScreen:
             .world_repository
             .get_all()
         )
+        
+        if campaign.world_id is not None:
+            worlds = [
+                world
+                for world in worlds
+                if world.id == campaign.world_id
+            ]
         
         self.setup_campaign = campaign
         self.setup_world = None
