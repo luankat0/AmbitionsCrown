@@ -2,12 +2,18 @@ from src.domain.campaign.models.campaign_faction import (
     CampaignFaction,
 )
 
+from src.domain.campaign.models.campaign_region import (
+    CampaignRegion,
+)
+
 
 class CampaignSnapshotService:
     def __init__(
         self,
         faction_repository,
-        campaign_faction_repository
+        campaign_faction_repository,
+        region_repository,
+        campaign_region_repository
     ):
         self.faction_repository = (
             faction_repository
@@ -15,6 +21,14 @@ class CampaignSnapshotService:
         
         self.campaign_faction_repository = (
             campaign_faction_repository
+        )
+        
+        self.region_repository = (
+            region_repository
+        )
+        
+        self.campaign_region_repository = (
+            campaign_region_repository
         )
         
     def snapshot_factions(
@@ -75,3 +89,61 @@ class CampaignSnapshotService:
             )
             
         return created_factions
+    
+    def snapshot_regions(
+        self,
+        campaign
+    ):
+        if campaign.id is None:
+            raise ValueError(
+                "Não é possível criar snapshot "
+                "de uma campanha sem ID."
+            )
+        
+        if campaign.world_id is None:
+            return []
+        
+        world_regions = (
+            self.region_repository
+            .get_all_by_world(
+                campaign.world_id
+            )
+        )
+        
+        campaign_regions = (
+            self.campaign_region_repository
+            .get_all_by_campaign(
+                campaign.id
+            )
+        )
+        
+        existing_source_ids = {
+            region.source_region_id
+            for region in campaign_regions
+            if region.source_region_id is not None
+        }
+        
+        created_regions = []
+        
+        for world_region in world_regions:
+            if world_region.id in existing_source_ids:
+                continue
+            
+            campaign_region = CampaignRegion(
+                campaign_id=campaign.id,
+                source_region_id=world_region.id,
+                name=world_region.name,
+                region_type=world_region.region_type,
+                description=world_region.description,
+                notes=world_region.notes,
+            )
+            
+            self.campaign_region_repository.add(
+                campaign_region
+            )
+            
+            created_regions.append(
+                campaign_region
+            )
+        
+        return created_regions

@@ -75,6 +75,8 @@ class App:
         self.campaign_snapshot_service = CampaignSnapshotService(
             self.faction_repository,
             self.campaign_faction_repository,
+            self.region_repository,
+            self.campaign_region_repository
         )
         
         self.current_campaign: Campaign | None = None
