@@ -170,6 +170,17 @@ class FactionScreen(BaseScreen):
             return
         
         if action == "edit":
+            if self.selected_faction is None:
+                return
+            
+            self.faction_form.prepare_edit(
+                self.selected_faction
+            )
+            
+            self.view_mode = (
+                FactionViewMode.FORM
+            )
+            
             return
         
         if action == "delete":
@@ -190,7 +201,7 @@ class FactionScreen(BaseScreen):
             return
         
         if action == "submit":
-            self.create_faction()
+            self.save_faction()
             return
         
     def update(self):
@@ -289,13 +300,30 @@ class FactionScreen(BaseScreen):
         )
         
     def cancel_faction_form(self):
+        is_editing = (
+            self.faction_form.editing_faction_id
+            is not None
+        )        
+        
         self.faction_form.clear()
+        self.faction_form.editing_faction_id = None
+        
+        if (
+            is_editing
+            and self.selected_faction is not None
+        ):
+            self.view_mode = (
+                FactionViewMode.DETAILS
+            )
+            return
+        
+        self.selected_faction = None
         
         self.view_mode = (
             FactionViewMode.LIST
         )
         
-    def create_faction(self):
+    def save_faction(self):
         campaign = self.app.current_campaign
         
         if (
@@ -304,13 +332,52 @@ class FactionScreen(BaseScreen):
         ):
             return
         
-        faction = (
-            self.faction_form.build_faction(
-                campaign.world_id
-            )
+        is_editing = (
+            self.faction_form.editing_faction_id
+            is not None
         )
         
+        if is_editing:
+            if self.selected_faction is None:
+                return
+            
+            world_id = (
+                self.selected_faction.world_id
+            )
+        else:
+            world_id = campaign.world_id
+            
+        faction = (
+            self.faction_form.build_faction(
+                world_id
+            )
+        )
+            
         if faction is None:
+            return
+            
+        if is_editing:
+            self.app.faction_repository.update(
+                faction
+            )
+            
+            self.refresh_factions()
+            
+            self.selected_faction = (
+                self.app
+                .faction_repository
+                .get_by_id(
+                    faction.id
+                )
+            )
+            
+            self.faction_form.clear()
+            self.faction_form.editing_faction_id = None
+            
+            self.view_mode = (
+                FactionViewMode.DETAILS
+            )
+            
             return
         
         self.app.faction_repository.add(
