@@ -64,8 +64,12 @@ class FactionScreen(BaseScreen):
     def refresh_factions(self):
         campaign = self.app.current_campaign
         
+        if campaign is None:
+            self.factions = []
+            return
+        
         if (
-            campaign is None
+            campaign.id is None
             or campaign.world_id is None
         ):
             self.factions = []
@@ -73,9 +77,9 @@ class FactionScreen(BaseScreen):
         
         self.factions = (
             self.app
-            .faction_repository
-            .get_all_by_world(
-                campaign.world_id
+            .campaign_faction_repository
+            .get_all_by_campaign(
+                campaign.id
             )
         )
         
@@ -354,6 +358,7 @@ class FactionScreen(BaseScreen):
         
         if (
             campaign is None
+            or campaign.id is None
             or campaign.world_id is None
         ):
             return
@@ -362,20 +367,11 @@ class FactionScreen(BaseScreen):
             self.faction_form.editing_faction_id
             is not None
         )
-        
-        if is_editing:
-            if self.selected_faction is None:
-                return
-            
-            world_id = (
-                self.selected_faction.world_id
-            )
-        else:
-            world_id = campaign.world_id
             
         faction = (
-            self.faction_form.build_faction(
-                world_id
+            self.faction_form
+            .build_campaign_faction(
+                campaign.id
             )
         )
             
@@ -383,7 +379,7 @@ class FactionScreen(BaseScreen):
             return
             
         if is_editing:
-            self.app.faction_repository.update(
+            self.app.campaign_faction_repository.update(
                 faction
             )
             
@@ -391,7 +387,7 @@ class FactionScreen(BaseScreen):
             
             self.selected_faction = (
                 self.app
-                .faction_repository
+                .campaign_faction_repository
                 .get_by_id(
                     faction.id
                 )
@@ -406,7 +402,7 @@ class FactionScreen(BaseScreen):
             
             return
         
-        self.app.faction_repository.add(
+        self.app.campaign_faction_repository.add(
             faction
         )
         
@@ -449,7 +445,7 @@ class FactionScreen(BaseScreen):
         
         self.confirm_dialog.close()
         
-        self.app.faction_repository.delete(
+        self.app.campaign_faction_repository.delete(
             faction
         )
         

@@ -1,9 +1,11 @@
 import pygame
 
 from src.domain.world.models.faction import (
-    Faction,
     FactionStatus,
     FactionType,
+)
+from src.domain.campaign.models.campaign_faction import (
+    CampaignFaction,
 )
 
 from src.ui.base_form import BaseForm
@@ -223,16 +225,16 @@ class FactionForm(BaseForm):
 
         return True
 
-    def build_faction(
+    def build_campaign_faction(
         self,
-        world_id
+        campaign_id
     ):
         if not self.validate():
             return None
 
-        return Faction(
+        return CampaignFaction(
             id=self.editing_faction_id,
-            world_id=world_id,
+            campaign_id=campaign_id,
             name=self.name_input.text.strip(),
             faction_type=(
                 self.selected_faction_type

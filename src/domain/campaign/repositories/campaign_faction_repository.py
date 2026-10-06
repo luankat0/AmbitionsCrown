@@ -141,3 +141,65 @@ class CampaignFactionRepository:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
+
+    def update(
+        self,
+        faction
+    ):
+        if faction.id is None:
+            raise ValueError(
+                "Não é possível atualizar uma facção "
+                "de campanha sem ID."
+            )
+
+        cursor = self.database.connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE campaign_factions
+            SET
+                name = ?,
+                faction_type = ?,
+                status = ?,
+                description = ?,
+                notes = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                faction.name,
+                faction.faction_type.value,
+                faction.status.value,
+                faction.description,
+                faction.notes,
+                faction.id,
+            )
+        )
+
+        self.database.connection.commit()
+
+        return faction
+    
+    def delete(
+        self,
+        faction
+    ):
+        if faction.id is None:
+            raise ValueError(
+                "Não é possível excluir uma facção "
+                "de campanha sem ID."
+            )
+
+        cursor = self.database.connection.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM campaign_factions
+            WHERE id = ?
+            """,
+            (
+                faction.id,
+            )
+        )
+
+        self.database.connection.commit()
