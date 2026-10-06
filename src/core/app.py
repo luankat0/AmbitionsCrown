@@ -83,7 +83,9 @@ class App:
             self.faction_repository,
             self.campaign_faction_repository,
             self.region_repository,
-            self.campaign_region_repository
+            self.campaign_region_repository,
+            self.location_repository,
+            self.campaign_location_repository
         )
         
         self.current_campaign: Campaign | None = None
