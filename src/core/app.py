@@ -2,7 +2,6 @@ import pygame
 
 from src.core.database import Database
 
-from src.domain.campaign.models.campaign import Campaign
 
 from src.repositories.npc_repository import NPCRepository
 from src.domain.world.repositories.world_repository import WorldRepository
@@ -10,10 +9,18 @@ from src.domain.world.repositories.region_repository import RegionRepository
 from src.domain.world.repositories.location_repository import LocationRepository
 from src.domain.world.repositories.faction_repository import FactionRepository
 
+
+from src.domain.campaign.models.campaign import Campaign
+
 from src.domain.campaign.repositories.campaign_repository import CampaignRepository
 from src.domain.campaign.repositories.campaign_faction_repository import (
     CampaignFactionRepository
 )
+
+from src.domain.campaign.services.campaign_snapshot_service import (
+    CampaignSnapshotService,
+)
+
 
 from src.screens.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
@@ -56,6 +63,11 @@ class App:
         
         self.campaign_faction_repository = CampaignFactionRepository(
             self.database
+        )
+        
+        self.campaign_snapshot_service = CampaignSnapshotService(
+            self.faction_repository,
+            self.campaign_faction_repository,
         )
         
         self.current_campaign: Campaign | None = None
