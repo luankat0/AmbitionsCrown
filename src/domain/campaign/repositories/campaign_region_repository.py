@@ -16,7 +16,8 @@ class CampaignRegionRepository:
 
     def add(
         self,
-        region
+        region,
+        commit=True
     ):
         cursor = self.database.connection.cursor()
 
@@ -41,8 +42,9 @@ class CampaignRegionRepository:
                 region.notes,
             )
         )
-
-        self.database.connection.commit()
+        
+        if commit:
+            self.database.connection.commit()
 
         region.id = cursor.lastrowid
 

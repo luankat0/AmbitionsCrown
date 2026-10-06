@@ -16,7 +16,8 @@ class CampaignLocationRepository:
 
     def add(
         self,
-        location
+        location,
+        commit=True
     ):
         self._validate_parent(
             location
@@ -49,8 +50,8 @@ class CampaignLocationRepository:
                 location.notes,
             )
         )
-
-        self.database.connection.commit()
+        if commit:
+            self.database.connection.commit()
 
         location.id = cursor.lastrowid
 
@@ -350,3 +351,4 @@ class CampaignLocationRepository:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
+

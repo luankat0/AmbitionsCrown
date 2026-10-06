@@ -120,7 +120,8 @@ class CampaignRepository:
 
     def mark_snapshot_created(
         self,
-        campaign
+        campaign,
+        commit=True
     ):
         if campaign.id is None:
             raise ValueError(
@@ -156,7 +157,8 @@ class CampaignRepository:
         
         row = cursor.fetchone()
         
-        self.database.connection.commit()
+        if commit:
+            self.database.connection.commit()
         
         if row is None:
             raise ValueError(

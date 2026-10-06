@@ -14,7 +14,8 @@ class CampaignFactionRepository:
 
     def add(
         self,
-        faction
+        faction,
+        commit=True
     ):
         cursor = self.database.connection.cursor()
 
@@ -41,8 +42,8 @@ class CampaignFactionRepository:
                 faction.notes,
             )
         )
-
-        self.database.connection.commit()
+        if commit:
+            self.database.connection.commit()
 
         faction.id = cursor.lastrowid
 
@@ -203,3 +204,4 @@ class CampaignFactionRepository:
         )
 
         self.database.connection.commit()
+
