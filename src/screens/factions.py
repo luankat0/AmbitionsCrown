@@ -3,6 +3,7 @@ import pygame
 from enum import Enum, auto
 
 from src.ui.button import Button
+from src.ui.dialogs.confirm_dialog import ConfirmDialog
 
 from src.ui.faction.faction_form import FactionForm
 from src.ui.faction.faction_list_view import FactionListView
@@ -29,6 +30,8 @@ class FactionScreen(BaseScreen):
         self.view_mode = (
             FactionViewMode.LIST
         )
+        
+        self.confirm_dialog = ConfirmDialog()
         
         self.faction_form = FactionForm()
         self.list_view = FactionListView()
@@ -80,6 +83,21 @@ class FactionScreen(BaseScreen):
         self,
         event
     ):
+        if self.confirm_dialog.visible:
+            action = self.confirm_dialog.handle_event(
+                event
+            )
+            
+            if action == "cancel":
+                self.confirm_dialog.close()
+                return
+            
+            if action == "confirm":
+                self.confirm_delete_faction()
+                return
+            
+            return
+        
         super().handle_event(
             event
         )
@@ -184,6 +202,7 @@ class FactionScreen(BaseScreen):
             return
         
         if action == "delete":
+            self.request_delete_faction()
             return
     
     def handle_faction_form_events(
@@ -224,28 +243,35 @@ class FactionScreen(BaseScreen):
             self.render_without_world(
                 screen
             )
-            return
         
-        if self.view_mode == FactionViewMode.FORM:
+        elif self.view_mode == FactionViewMode.FORM:
             self.faction_form.render(
                 screen
             )
-            return
         
-        if self.view_mode == FactionViewMode.DETAILS:
+        elif self.view_mode == FactionViewMode.DETAILS:
             if self.selected_faction is None:
                 self.return_to_list()
+                
+                self.list_view.render(
+                    screen,
+                    self.factions
+                )
             else:
                 self.details_view.render(
                     screen,
                     self.selected_faction
                 )
-                return
+        else:
+            self.list_view.render(
+                screen,
+                self.factions
+            )
         
-        self.list_view.render(
-            screen,
-            self.factions
-        )
+        if self.confirm_dialog.visible:
+            self.confirm_dialog.render(
+                screen
+            )
         
     def render_without_world(
         self,
@@ -394,6 +420,42 @@ class FactionScreen(BaseScreen):
 
     def return_to_list(self):
         self.selected_faction = None
+        
+        self.view_mode = (
+            FactionViewMode.LIST
+        )
+
+    def request_delete_faction(self):
+        if self.selected_faction is None:
+            return
+        
+        self.confirm_dialog.open(
+            title="Excluir Facção",
+            message=(
+                f"Excluir '{self.selected_faction.name}'?"
+            ),
+            warning=(
+                "Esta ação não pode ser desfeita."
+            ),
+            confirm_text="Excluir"
+        )
+        
+    def confirm_delete_faction(self):
+        if self.selected_faction is None:
+            self.confirm_dialog.close()
+            return
+        
+        faction = self.selected_faction
+        
+        self.confirm_dialog.close()
+        
+        self.app.faction_repository.delete(
+            faction
+        )
+        
+        self.selected_faction = None
+        
+        self.refresh_factions()
         
         self.view_mode = (
             FactionViewMode.LIST
