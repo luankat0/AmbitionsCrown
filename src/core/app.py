@@ -16,6 +16,9 @@ from src.domain.campaign.repositories.campaign_repository import CampaignReposit
 from src.domain.campaign.repositories.campaign_faction_repository import (
     CampaignFactionRepository
 )
+from src.domain.campaign.repositories.campaign_region_repository import (
+    CampaignRegionRepository,
+)
 
 from src.domain.campaign.services.campaign_snapshot_service import (
     CampaignSnapshotService,
@@ -62,6 +65,10 @@ class App:
         )
         
         self.campaign_faction_repository = CampaignFactionRepository(
+            self.database
+        )
+        
+        self.campaign_region_repository = CampaignRegionRepository(
             self.database
         )
         
