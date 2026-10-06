@@ -1,4 +1,4 @@
-from src.models.region import RegionType
+from src.domain.world.models.region import RegionType
 
 
 REGION_TYPE_LABELS = {

@@ -1,4 +1,4 @@
-from src.models.world import World
+from src.domain.world.models.world import World
 
 class WorldRepository:
     def __init__(self, database):

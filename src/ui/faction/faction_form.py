@@ -1,6 +1,6 @@
 import pygame
 
-from src.models.faction import (
+from src.domain.world.models.faction import (
     Faction,
     FactionStatus,
     FactionType,

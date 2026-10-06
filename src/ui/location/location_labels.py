@@ -1,4 +1,4 @@
-from src.models.location import LocationType
+from src.domain.world.models.location import LocationType
 
 
 LOCATION_TYPE_LABELS = {

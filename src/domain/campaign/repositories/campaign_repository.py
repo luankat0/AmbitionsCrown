@@ -1,4 +1,4 @@
-from src.models.campaign import Campaign, CampaignStatus
+from src.domain.campaign.models.campaign import Campaign, CampaignStatus
 
 class CampaignRepository:
     def __init__(self, database):

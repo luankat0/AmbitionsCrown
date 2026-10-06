@@ -1,6 +1,6 @@
 import pygame
 
-from src.models.region import Region, RegionType
+from src.domain.world.models.region import Region, RegionType
 
 from src.ui.base_form import BaseForm
 from src.ui.button import Button

@@ -1,4 +1,4 @@
-from src.models.region import Region, RegionType
+from src.domain.world.models.region import Region, RegionType
 
 class RegionRepository:
     def __init__(self, database):

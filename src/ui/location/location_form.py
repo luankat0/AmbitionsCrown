@@ -1,6 +1,6 @@
 import pygame
 
-from src.models.location import (
+from src.domain.world.models.location import (
     Location,
     LocationType
 )

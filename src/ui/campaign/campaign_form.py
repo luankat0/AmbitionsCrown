@@ -1,6 +1,6 @@
 import pygame
 
-from src.models.campaign import Campaign
+from src.domain.campaign.models.campaign import Campaign
 
 from src.ui.button import Button
 from src.ui.text_area import TextArea

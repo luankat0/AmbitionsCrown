@@ -2,7 +2,7 @@ import pygame
 
 from enum import Enum, auto
 
-from src.models.campaign import CampaignStatus
+from src.domain.campaign.models.campaign import CampaignStatus
 
 from src.ui.button import Button
 from src.ui.campaign.campaign_form import CampaignForm

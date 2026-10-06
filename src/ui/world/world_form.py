@@ -1,6 +1,6 @@
 import pygame
 
-from src.models.world import World
+from src.domain.world.models.world import World
 
 from src.ui.button import Button
 from src.ui.text_area import TextArea

@@ -1,4 +1,4 @@
-from src.models.location import Location, LocationType
+from src.domain.world.models.location import Location, LocationType
 
 class LocationRepository:
     def __init__(self, database):
