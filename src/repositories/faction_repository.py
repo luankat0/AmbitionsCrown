@@ -147,7 +147,10 @@ class FactionRepository:
             updated_at=row["updated_at"],
         )
         
-    def update(self, faction):
+    def update(
+        self, 
+        faction
+    ):
         if faction.id is None:
             raise ValueError(
                 "Não é possível atualizar uma facção sem ID."
@@ -180,4 +183,31 @@ class FactionRepository:
         self.database.connection.commit()
 
         return faction
+
+    def delete(
+        self, 
+        faction
+    ):
+        if faction.id is None:
+            raise ValueError(
+                "Não é possível excluir uma facção sem ID."
+            )
+            
+        cursor = (
+            self.database
+            .connection
+            .cursor()
+        )
+        
+        cursor.execute(
+            """
+            DELETE FROM factions
+            WHERE id = ?
+            """,
+            (
+                faction.id,
+            )
+        )
+        
+        self.database.connection.commit()
 
