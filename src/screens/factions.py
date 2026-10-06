@@ -6,12 +6,14 @@ from src.ui.button import Button
 
 from src.ui.faction.faction_form import FactionForm
 from src.ui.faction.faction_list_view import FactionListView
+from src.ui.faction.faction_details_view import FactionDetailsView
 
 from src.screens.base_screen import BaseScreen
 
 
 class FactionViewMode(Enum):
     LIST = auto()
+    DETAILS = auto()
     FORM = auto()
 
 class FactionScreen(BaseScreen):
@@ -30,6 +32,9 @@ class FactionScreen(BaseScreen):
         
         self.faction_form = FactionForm()
         self.list_view = FactionListView()
+        self.details_view = FactionDetailsView()
+        
+        self.selected_faction = None
         
         self.title_font = pygame.font.Font(
             None,
@@ -100,11 +105,20 @@ class FactionScreen(BaseScreen):
                 self.cancel_faction_form()
                 return
             
+            if self.view_mode == FactionViewMode.DETAILS:
+                self.return_to_list()
+                return
+            
         if self.view_mode == FactionViewMode.FORM:
             self.handle_faction_form_events(
                 event
             )
             return
+        
+        if self.view_mode == FactionViewMode.DETAILS:
+            self.handle_details_events(
+                event
+            )
         
         self.handle_list_events(
             event
@@ -133,8 +147,34 @@ class FactionScreen(BaseScreen):
             action == "select"
             and faction is not None
         ):
-            return  
-       
+            self.selected_faction = faction
+            
+            self.view_mode = (
+                FactionViewMode.DETAILS
+            )  
+            
+            return
+    
+    def handle_details_events(
+        self,
+        event
+    ):
+        action, _ = (
+            self.details_view.handle_event(
+                event
+            )
+        )
+        
+        if action == "back":
+            self.return_to_list()
+            return
+        
+        if action == "edit":
+            return
+        
+        if action == "delete":
+            return
+    
     def handle_faction_form_events(
         self,
         event
@@ -180,6 +220,16 @@ class FactionScreen(BaseScreen):
                 screen
             )
             return
+        
+        if self.view_mode == FactionViewMode.DETAILS:
+            if self.selected_faction is None:
+                self.return_to_list()
+            else:
+                self.details_view.render(
+                    screen,
+                    self.selected_faction
+                )
+                return
         
         self.list_view.render(
             screen,
@@ -270,6 +320,13 @@ class FactionScreen(BaseScreen):
         self.refresh_factions()
         
         self.faction_form.clear()
+        
+        self.view_mode = (
+            FactionViewMode.LIST
+        )
+
+    def return_to_list(self):
+        self.selected_faction = None
         
         self.view_mode = (
             FactionViewMode.LIST
