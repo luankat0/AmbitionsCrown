@@ -14,16 +14,18 @@ class CampaignRepository:
                 description,
                 notes,
                 status,
-                world_id
+                world_id,
+                snapshot_created_at
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 campaign.name,
                 campaign.description,
                 campaign.notes,
                 campaign.status.value,
-                campaign.world_id
+                campaign.world_id,
+                campaign.snapshot_created_at
             )
         )
         
@@ -45,6 +47,7 @@ class CampaignRepository:
                 notes,
                 status,
                 world_id,
+                snapshot_created_at,
                 created_at,
                 updated_at
             FROM campaigns
@@ -66,6 +69,9 @@ class CampaignRepository:
                     row["status"]
                 ),
                 world_id=row["world_id"],
+                snapshot_created_at=row[
+                    "snapshot_created_at"
+                ],
                 created_at=row["created_at"],
                 updated_at=row["updated_at"]
             )
@@ -93,6 +99,7 @@ class CampaignRepository:
                 notes = ?,
                 status = ?,
                 world_id = ?,
+                snapshot_created_at = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
@@ -102,6 +109,7 @@ class CampaignRepository:
                 campaign.notes,
                 campaign.status.value,
                 campaign.world_id,
+                campaign.snapshot_created_at,
                 campaign.id
             )
         )
