@@ -210,19 +210,28 @@ class RegionScreen(BaseScreen):
         )
 
     def create_location(self):
-        if self.region.id is None:
+        campaign = self.app.current_campaign
+        
+        if (
+            campaign is None
+            or campaign.id is None
+            or self.region.id is None
+        ):
             return
         
         location = (
-            self.location_form.build_location(
-                region_id=self.region.id
+            self.location_form
+            .build_campaign_location(
+                campaign_id=campaign.id,
+                region_id=self.region.id,
+                parent_location_id=None
             )
         )
         
         if location is None:
             return
         
-        self.app.location_repository.add(
+        self.app.campaign_location_repository.add(
             location
         )
         
@@ -239,13 +248,19 @@ class RegionScreen(BaseScreen):
             self.locations = []
             return
 
-        self.locations = (
+        locations = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_all_by_region(
                 self.region.id
             )
         )
+        
+        self.locations = [
+            location
+            for location in locations
+            if location.parent_location_id is None
+        ]
 
     def return_to_world(self):
         self.app.open_world()
@@ -309,22 +324,38 @@ class RegionScreen(BaseScreen):
         )
         
     def update_region(self):
+        campaign = self.app.current_campaign
+        
+        if (
+            campaign is None
+            or campaign.id is None
+            or self.region.id is None
+        ):
+            return
+        
         updated_region = (
-            self.region_form.build_region(
-                self.region.world_id
+            self.region_form
+            .build_campaign_region(
+                campaign.id
             )
         )
         
         if updated_region is None:
             return
         
-        self.app.region_repository.update(
+        updated_region.id = self.region.id
+        
+        updated_region.source_region_id = (
+            self.region.source_region_id
+        )
+        
+        self.app.campaign_region_repository.update(
             updated_region
         )
         
         refreshed_region = (
             self.app
-            .region_repository
+            .campaign_region_repository
             .get_by_id(
                 updated_region.id
             )
@@ -347,7 +378,7 @@ class RegionScreen(BaseScreen):
         
         locations = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_all_by_region(
                 self.region.id
             )
@@ -389,7 +420,7 @@ class RegionScreen(BaseScreen):
         self.confirm_dialog.close()
         
         try:
-            self.app.region_repository.delete(
+            self.app.campaign_region_repository.delete(
                 self.region
             )
             
