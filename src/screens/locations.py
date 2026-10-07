@@ -194,15 +194,20 @@ class LocationScreen(BaseScreen):
         )
         
     def create_child(self):
+        campaign = self.app.current_campaign
+        
         if (
-            self.region.id is None
+            campaign is None
+            or campaign.id is None
+            or self.region.id is None
             or self.location.id is None
         ):
             return
         
         child = (
             self.location_form
-            .build_location(
+            .build_campaign_location(
+                campaign_id=campaign.id,
                 region_id=self.region.id,
                 parent_location_id=(
                     self.location.id
@@ -213,7 +218,7 @@ class LocationScreen(BaseScreen):
         if child is None:
             return
         
-        self.app.location_repository.add(
+        self.app.campaign_location_repository.add(
             child
         )
         
@@ -271,7 +276,7 @@ class LocationScreen(BaseScreen):
         
         self.children = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_children(
                 self.location.id
             )
@@ -298,7 +303,7 @@ class LocationScreen(BaseScreen):
 
         parent = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_by_id(
                 parent_id
             )
@@ -332,8 +337,19 @@ class LocationScreen(BaseScreen):
             return
         
     def update_location(self):
+        campaign = self.app.current_campaign
+        
+        if (
+            campaign is None
+            or campaign.id is None
+            or self.location.id is None
+        ):
+            return
+        
         updated_location = (
-            self.location_form.build_location(
+            self.location_form
+            .build_campaign_location(
+                campaign_id=campaign.id,
                 region_id=self.location.region_id,
                 parent_location_id=(
                     self.location
@@ -345,26 +361,30 @@ class LocationScreen(BaseScreen):
         if updated_location is None:
             return
         
-        self.app.location_repository.update(
+        updated_location.id = (
+            self.location.id
+        )
+        
+        updated_location.source_location_id = (
+            self.location.source_location_id
+        )
+        
+        self.app.campaign_location_repository.update(
             updated_location
         )
         
         refreshed_location = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_by_id(
                 updated_location.id
             )
         )
         
         if refreshed_location is not None:
-            self.location = (
-                refreshed_location
-            )
+            self.location = refreshed_location
         else:
-            self.location = (
-                updated_location
-            )
+            self.location = updated_location
         
         self.refresh_children()
         
@@ -380,7 +400,7 @@ class LocationScreen(BaseScreen):
         
         children = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_children(
                 self.location.id
             )
@@ -427,7 +447,7 @@ class LocationScreen(BaseScreen):
         self.confirm_dialog.close()
         
         try:
-            self.app.location_repository.delete(
+            self.app.campaign_location_repository.delete(
                 self.location
             )
         
@@ -446,7 +466,7 @@ class LocationScreen(BaseScreen):
         
         parent = (
             self.app
-            .location_repository
+            .campaign_location_repository
             .get_by_id(
                 parent_id
             )
@@ -460,3 +480,4 @@ class LocationScreen(BaseScreen):
             self.region,
             parent
         )
+
