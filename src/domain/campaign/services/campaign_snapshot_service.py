@@ -52,7 +52,8 @@ class CampaignSnapshotService:
         
     def snapshot_factions(
         self,
-        campaign
+        campaign,
+        commit=True
     ):
         if campaign.id is None:
             raise ValueError(
@@ -100,7 +101,8 @@ class CampaignSnapshotService:
             )
             
             self.campaign_faction_repository.add(
-                campaign_faction
+                campaign_faction,
+                commit=commit
             )
             
             created_factions.append(
@@ -111,7 +113,8 @@ class CampaignSnapshotService:
     
     def snapshot_regions(
         self,
-        campaign
+        campaign,
+        commit=True
     ):
         if campaign.id is None:
             raise ValueError(
@@ -158,7 +161,8 @@ class CampaignSnapshotService:
             )
             
             self.campaign_region_repository.add(
-                campaign_region
+                campaign_region,
+                commit=commit
             )
             
             created_regions.append(
@@ -169,7 +173,8 @@ class CampaignSnapshotService:
     
     def snapshot_locations(
         self,
-        campaign
+        campaign,
+        commit=True
     ):
         if campaign.id is None:
             raise ValueError(
@@ -312,7 +317,8 @@ class CampaignSnapshotService:
                 )
                 
                 self.campaign_location_repository.add(
-                    campaign_location
+                    campaign_location,
+                    commit=commit
                 )
                 
                 location_id_map[
@@ -360,30 +366,57 @@ class CampaignSnapshotService:
                 "um snapshot inicial."
             )
             
-        created_regions = (
-            self.snapshot_regions(
-                campaign
-            )
+        connection = (
+            self.campaign_repository
+            .database
+            .connection
         )
         
-        created_locations = (
-            self.snapshot_locations(
-                campaign
-            )
+        original_snapshot_created_at = (
+            campaign.snapshot_created_at
         )
         
-        created_factions = (
-            self.snapshot_factions(
-                campaign
+        try:
+            created_regions = (
+                self.snapshot_regions(
+                    campaign,
+                    commit=False
+                )
             )
-        )
         
-        self.campaign_repository.mark_snapshot_created(
-            campaign
-        )
+            created_locations = (
+                self.snapshot_locations(
+                    campaign,
+                    commit=False
+                )
+            )
+            
+            created_factions = (
+                self.snapshot_factions(
+                    campaign,
+                    commit=False
+                )
+            )
+        
+            self.campaign_repository.mark_snapshot_created(
+                campaign,
+                commit=False
+            )
+            
+            connection.commit()
+        
+        except Exception:
+            connection.rollback()
+            
+            campaign.snapshot_created_at = (
+                original_snapshot_created_at
+            )
+            
+            raise
         
         return {
             "regions": created_regions,
             "locations": created_locations,
             "factions": created_factions,
         }
+
