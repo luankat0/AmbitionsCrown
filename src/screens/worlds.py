@@ -147,13 +147,13 @@ class WorldScreen(BaseScreen):
         self, 
         event
     ):            
-        if self.change_world_button.handle_event(
-            event
-        ):
-            self.view_mode = (
-                WorldViewMode.WORLD_SELECT
-            )
-            return
+        # if self.change_world_button.handle_event(
+        #     event
+        # ):
+        #     self.view_mode = (
+        #         WorldViewMode.WORLD_SELECT
+        #     )
+        #     return
         
         action, region = (
             self.region_list_view
@@ -351,9 +351,6 @@ class WorldScreen(BaseScreen):
             (300, 155)
         )
         
-        self.change_world_button.render(
-            screen
-        )
         self.region_list_view.render(
             screen,
             self.regions
@@ -489,16 +486,16 @@ class WorldScreen(BaseScreen):
         
         if (
             campaign is None
-            or campaign.world_id is None
+            or campaign.id is None
         ):
             self.regions = []
             return
         
         self.regions = (
             self.app
-            .region_repository
-            .get_all_by_world(
-                campaign.world_id
+            .campaign_region_repository
+            .get_all_by_campaign(
+                campaign.id
             )
         )
                 
@@ -537,15 +534,16 @@ class WorldScreen(BaseScreen):
             return
         
         region = (
-            self.region_form.build_region(
-                campaign.world_id
+            self.region_form
+            .build_campaign_region(
+                campaign.id
             )
         )
         
         if region is None:
             return
         
-        self.app.region_repository.add(
+        self.app.campaign_region_repository.add(
             region
         )
         
