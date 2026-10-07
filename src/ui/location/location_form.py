@@ -5,6 +5,10 @@ from src.domain.world.models.location import (
     LocationType
 )
 
+from src.domain.campaign.models.campaign_location import (
+    CampaignLocation,
+)
+
 from src.ui.base_form import BaseForm
 from src.ui.button import Button
 from src.ui.text_area import TextArea
@@ -199,7 +203,23 @@ class LocationForm(BaseForm):
                 .strip()
             )
         )
-        
+    
+    def build_campaign_location(
+        self,
+        campaign_id,
+        region_id,
+        parent_location_id=None
+    ):
+        return CampaignLocation(
+            campaign_id=campaign_id,
+            region_id=region_id,
+            parent_location_id=parent_location_id,
+            name=self.name_input.text.strip(),
+            location_type=self.selected_location_type,
+            description=self.description_input.text.strip(),
+            notes=self.notes_input.text.strip(),
+        )
+     
     def prepare_create(self):
         super().prepare_create()
         

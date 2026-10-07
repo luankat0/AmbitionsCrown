@@ -2,6 +2,10 @@ import pygame
 
 from src.domain.world.models.region import Region, RegionType
 
+from src.domain.campaign.models.campaign_region import (
+    CampaignRegion,
+)
+
 from src.ui.base_form import BaseForm
 from src.ui.button import Button
 from src.ui.text_area import TextArea
@@ -341,3 +345,16 @@ class RegionForm(BaseForm):
         self.submit_button.render(
             screen
         )    
+
+    def build_campaign_region(
+        self,
+        campaign_id
+    ):
+        return CampaignRegion(
+            campaign_id=campaign_id,
+            name=self.name_input.text.strip(),
+            region_type=self.selected_region_type,
+            description=self.description_input.text.strip(),
+            notes=self.notes_input.text.strip(),
+        )
+
