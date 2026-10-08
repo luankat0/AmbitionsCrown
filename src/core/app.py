@@ -35,6 +35,9 @@ from src.screens.worlds import WorldScreen
 from src.screens.regions import RegionScreen
 from src.screens.locations import LocationScreen
 from src.screens.factions import FactionScreen
+from src.screens.world_library import (
+    WorldLibraryScreen,
+)
 
 class App:
     def __init__(self):
@@ -114,6 +117,9 @@ class App:
         screens = {
             "campaigns":
                 self.open_campaigns,
+            
+            "world_library":
+                self.open_world_library,
                 
             "dashboard":
                 self.open_dashboard,
@@ -246,3 +252,11 @@ class App:
             self
         )
 
+    def open_world_library(self):
+        self.close_campaign()
+        
+        self.current_screen = (
+            WorldLibraryScreen(
+                self
+            )
+        )

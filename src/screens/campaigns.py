@@ -62,6 +62,14 @@ class CampaignScreen:
             "+ Nova Campanha"
         )
         
+        self.manage_worlds_button = Button(
+            290,
+            110,
+            190,
+            45,
+            "Gerenciar Mundos"
+        )
+        
         self.card_rects = []
         
         self.scroll_offset = 0
@@ -180,6 +188,15 @@ class CampaignScreen:
             
             return
         
+        if self.manage_worlds_button.handle_event(
+            event
+        ):
+            self.app.change_screen(
+                "world_library"
+            )
+            
+            return
+        
         if (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
@@ -266,6 +283,10 @@ class CampaignScreen:
         )
         
         self.new_campaign_button.render(
+            screen
+        )
+        
+        self.manage_worlds_button.render(
             screen
         )
         
