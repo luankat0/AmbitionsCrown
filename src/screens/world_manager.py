@@ -1,7 +1,15 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.ui.button import Button
 
+from src.ui.region.region_form import RegionForm
+
+
+class WorldManagerViewMode(Enum):
+    LIST = auto()
+    REGION_FORM = auto()
 
 class WorldManagerScreen:
     def __init__(
@@ -34,14 +42,27 @@ class WorldManagerScreen:
             "← Biblioteca de Mundos"
         )
         
+        self.new_region_button = Button(
+            650,
+            225,
+            190,
+            45,
+            "+ Nova Região"
+        )
+        
         self.regions = []
         
         self.scroll_offset = 0
-        self.scroll_offset = 40
+        self.scroll_speed = 40
         
         self.list_rect = pygame.Rect(
             80, 315, 850, 335
         )
+        
+        self.view_mode = WorldManagerViewMode.LIST
+        
+        self.region_form = RegionForm()
+        
         
         self.refresh_regions()
         
@@ -64,15 +85,35 @@ class WorldManagerScreen:
     ):
         if (
             event.type == pygame.KEYDOWN
-            and event.type == pygame.K_ESCAPE
+            and event.key == pygame.K_ESCAPE
         ):
+            if (
+                self.view_mode
+                == WorldManagerViewMode.REGION_FORM
+            ):
+                self.cancel_region_form()
+                return
+            
             self.app.open_world_library()
             return
         
-        if self.back_button.handle_event(
-            event
+        if (
+            self.view_mode
+            == WorldManagerViewMode.REGION_FORM
         ):
+            self.handle_region_form_events(event)
+            return
+        
+        if self.back_button.handle_event(event):
             self.app.open_world_library()
+            return
+        
+        if self.new_region_button.handle_event(event):
+            self.region_form.prepare_create()
+            
+            self.view_mode = (
+                WorldManagerViewMode.REGION_FORM
+            )
             return
         
         if event.type == pygame.MOUSEWHEEL:
@@ -80,10 +121,53 @@ class WorldManagerScreen:
                 pygame.mouse.get_pos()
             ):
                 self.scroll_offset -= (
-                    event.y * self.scroll_offset
+                    event.y * self.scroll_speed
                 )
                 
                 self._clamp_scroll()
+                
+    def handle_region_form_events(self, event):
+        action = self.region_form.handle_event(event)
+        
+        if action == "cancel":
+            self.cancel_region_form()
+            return
+        
+        if action == "submit":
+            self.create_region()
+            return
+        
+    def cancel_region_form(self):
+        self.region_form.clear()
+        
+        self.view_mode = (
+            WorldManagerViewMode.LIST
+        )
+        
+    def create_region(self):
+        if self.world.id is None:
+            return
+        
+        region = self.region_form.build_region(
+            self.world.id
+        )
+        
+        if region is None:
+            return
+        
+        self.app.region_repository.add(
+            region
+        )
+        
+        self.refresh_regions()
+        
+        self.scroll_offset = 0
+        
+        self.region_form.clear()
+        
+        self.view_mode = (
+            WorldManagerViewMode.LIST
+        )
                 
     def update(self):
         pass
@@ -95,6 +179,13 @@ class WorldManagerScreen:
         screen.fill(
             self.background_color
         )
+        
+        if (
+            self.view_mode
+            == WorldManagerViewMode.REGION_FORM
+        ):
+            self.region_form.render(screen)
+            return
         
         title_surface = (
             self.info_font.render(
@@ -112,6 +203,8 @@ class WorldManagerScreen:
         self.back_button.render(
             screen
         )
+        
+        self.new_region_button.render(screen)
         
         world_surface = (
             self.name_font.render(
