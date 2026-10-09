@@ -146,6 +146,25 @@ class WorldLibraryScreen:
             
             return
         
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            if not self.list_rect.collidepoint(
+                event.pos
+            ):
+                return
+            
+            for world, rect in self.world_card_rects:
+                if rect.collidepoint(
+                    event.pos
+                ):
+                    self.app.open_world_manager(
+                        world
+                    )
+                    
+                    return
+        
     def handle_form_events(
         self,
         event

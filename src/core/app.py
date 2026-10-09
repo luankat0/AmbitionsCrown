@@ -35,8 +35,12 @@ from src.screens.worlds import WorldScreen
 from src.screens.regions import RegionScreen
 from src.screens.locations import LocationScreen
 from src.screens.factions import FactionScreen
+
 from src.screens.world_library import (
     WorldLibraryScreen,
+)
+from src.screens.world_manager import (
+    WorldManagerScreen,
 )
 
 class App:
@@ -258,5 +262,18 @@ class App:
         self.current_screen = (
             WorldLibraryScreen(
                 self
+            )
+        )
+        
+    def open_world_manager(
+        self,
+        world
+    ):
+        self.close_campaign()
+        
+        self.current_screen = (
+            WorldManagerScreen(
+                self,
+                world
             )
         )
