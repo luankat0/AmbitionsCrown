@@ -63,6 +63,8 @@ class WorldManagerScreen:
         
         self.region_form = RegionForm()
         
+        self.region_card_rects = []
+        
         
         self.refresh_regions()
         
@@ -115,6 +117,26 @@ class WorldManagerScreen:
                 WorldManagerViewMode.REGION_FORM
             )
             return
+        
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            if not self.list_rect.collidepoint(
+                event.pos
+            ):
+                return
+            
+            for region, rect in self.region_card_rects:
+                if rect.collidepoint(
+                    event.pos
+                ):
+                    self.app.open_world_region(
+                        self.world,
+                        region
+                    )
+                    
+                    return
         
         if event.type == pygame.MOUSEWHEEL:
             if self.list_rect.collidepoint(
@@ -240,6 +262,8 @@ class WorldManagerScreen:
         self,
         screen
     ):
+        self.region_card_rects = []
+        
         if not self.regions:
             empty_surface = (
                 self.info_font.render(
@@ -274,6 +298,13 @@ class WorldManagerScreen:
             rect = pygame.Rect(
                 80, y,
                 760, 75
+            )
+            
+            self.region_card_rects.append(
+                (
+                    region,
+                    rect
+                )
             )
             
             pygame.draw.rect(

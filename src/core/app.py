@@ -42,6 +42,9 @@ from src.screens.world_library import (
 from src.screens.world_manager import (
     WorldManagerScreen,
 )
+from src.screens.world_region import (
+    WorldRegionScreen
+)
 
 class App:
     def __init__(self):
@@ -277,3 +280,19 @@ class App:
                 world
             )
         )
+    
+    def open_world_region(
+        self,
+        world,
+        region
+    ):
+        self.close_campaign()
+        
+        self.current_screen = (
+            WorldRegionScreen(
+                self,
+                world,
+                region
+            )
+        )
+        
