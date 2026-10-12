@@ -242,9 +242,15 @@ class LocationForm(BaseForm):
     self,
     screen
     ):
+        title_text = (
+            "Editar Local"
+            if self.mode == "edit"
+            else "Novo Local"
+        )
+        
         title_surface = (
             self.title_font.render(
-                "Novo Local",
+                title_text,
                 True,
                 (240, 240, 245)
             )
@@ -380,7 +386,7 @@ class LocationForm(BaseForm):
             location.notes
         )
         
-        self.location_types_index = (
+        self.location_type_index = (
             self.location_types.index(
                 location.location_type
             )

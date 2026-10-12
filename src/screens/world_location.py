@@ -11,6 +11,7 @@ from src.ui.location.location_form import (
 class WorldLocationViewMode(Enum):
     DETAILS = auto()
     CHILD_FORM = auto()
+    EDIT_FORM = auto()
 
 class WorldLocationScreen:
     def __init__(
@@ -48,6 +49,14 @@ class WorldLocationScreen:
             190,
             45,
             "+ Novo Sublocal"
+        )
+        
+        self.edit_button = Button(
+            440,
+            285,
+            185,
+            45,
+            "Editar Local"
         )
         
         self.children = []
@@ -109,14 +118,21 @@ class WorldLocationScreen:
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
-            if (
-                self.view_mode
-                == WorldLocationViewMode.CHILD_FORM
+            if self.view_mode in (
+                WorldLocationViewMode.CHILD_FORM,
+                WorldLocationViewMode.EDIT_FORM
             ):
                 self.cancel_child_form()
                 return
             
             self.navigate_back()
+            return
+        
+        if (
+            self.view_mode
+            == WorldLocationViewMode.EDIT_FORM
+        ):
+            self.handle_edit_form_events(event)
             return
         
         if (
@@ -128,6 +144,17 @@ class WorldLocationScreen:
         
         if self.back_button.handle_event(event):
             self.navigate_back()
+            return
+        
+        if self.edit_button.handle_event(event):
+            self.location_form.prepare_edit(
+                self.location
+            )
+            
+            self.view_mode = (
+                WorldLocationViewMode.EDIT_FORM
+            )
+            
             return
         
         if self.new_child_button.handle_event(event):
@@ -175,6 +202,19 @@ class WorldLocationScreen:
             self.create_child()
             return
     
+    def handle_edit_form_events(self, event):
+        action = self.location_form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_child_form()
+            return
+        
+        if action == "submit":
+            self.update_location()
+            return
+    
     def create_child(self):
         if (
             self.region.id is None
@@ -209,17 +249,53 @@ class WorldLocationScreen:
     def update(self):
         pass
     
+    def update_location(self):
+        if self.location.id is None:
+            return
+        
+        updated_location = (
+            self.location_form.build_location(
+                region_id=self.location.region_id,
+                parent_location_id=(
+                    self.location.parent_location_id
+                )
+            )
+        )
+        
+        if updated_location is None:
+            return
+        
+        updated_location.id = self.location.id
+        
+        self.app.location_repository.update(
+            updated_location
+        )
+        
+        refreshed_location = (
+            self.app
+            .location_repository
+            .get_by_id(
+                self.location.id
+            )
+        )
+        
+        if refreshed_location is not None:
+            self.location = refreshed_location
+            
+        self.location_form.clear()
+        
+        self.view_mode = (
+            WorldLocationViewMode.DETAILS
+        )
+    
     def render(self, screen):
         screen.fill(self.background_color)
         
-        if (
-            self.view_mode
-            == WorldLocationViewMode.CHILD_FORM
+        if self.view_mode in (
+            WorldLocationViewMode.CHILD_FORM,
+            WorldLocationViewMode.EDIT_FORM
         ):
-            self.location_form.render(
-                screen
-            )
-            
+            self.location_form.render(screen)
             return
         
         title = self.title_font.render(
@@ -231,6 +307,8 @@ class WorldLocationScreen:
         screen.blit(title, (80, 55))
         
         self.back_button.render(screen)
+        
+        self.edit_button.render(screen)
         
         self.new_child_button.render(
             screen
