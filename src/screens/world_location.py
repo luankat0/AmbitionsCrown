@@ -1,7 +1,16 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.ui.button import Button
 
+from src.ui.location.location_form import (
+    LocationForm,
+)
+
+class WorldLocationViewMode(Enum):
+    DETAILS = auto()
+    CHILD_FORM = auto()
 
 class WorldLocationScreen:
     def __init__(
@@ -25,6 +34,20 @@ class WorldLocationScreen:
         self.back_button = Button(
             80, 110, 180, 45,
             "← Voltar"
+        )
+        
+        self.view_mode = (
+            WorldLocationViewMode.DETAILS
+        )
+        
+        self.location_form = LocationForm()
+        
+        self.new_child_button = Button(
+            650,
+            285,
+            190,
+            45,
+            "+ Novo Sublocal"
         )
         
         self.children = []
@@ -86,11 +109,34 @@ class WorldLocationScreen:
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
+            if (
+                self.view_mode
+                == WorldLocationViewMode.CHILD_FORM
+            ):
+                self.cancel_child_form()
+                return
+            
             self.navigate_back()
+            return
+        
+        if (
+            self.view_mode
+            == WorldLocationViewMode.CHILD_FORM
+        ):
+            self.handle_child_form_events(event)
             return
         
         if self.back_button.handle_event(event):
             self.navigate_back()
+            return
+        
+        if self.new_child_button.handle_event(event):
+            self.location_form.prepare_create()
+            
+            self.view_mode = (
+                WorldLocationViewMode.CHILD_FORM
+            )
+            
             return
         
         if (
@@ -115,12 +161,66 @@ class WorldLocationScreen:
                     event.y * self.scroll_speed
                 )
                 self._clamp_scroll()
-                
+    
+    def handle_child_form_events(self, event):
+        action = self.location_form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_child_form()
+            return
+        
+        if action == "submit":
+            self.create_child()
+            return
+    
+    def create_child(self):
+        if (
+            self.region.id is None
+            or self.location.id is None
+        ):
+            return
+        
+        child = (
+            self.location_form.build_location(
+                region_id=self.region.id,
+                parent_location_id=self.location.id
+            )
+        )
+        
+        if child is None:
+            return
+        
+        self.app.location_repository.add(
+            child
+        )
+        
+        self.refresh_children()
+        
+        self.scroll_offset = 0
+        
+        self.location_form.clear()
+        
+        self.view_mode = (
+            WorldLocationViewMode.DETAILS
+        )
+    
     def update(self):
         pass
     
     def render(self, screen):
         screen.fill(self.background_color)
+        
+        if (
+            self.view_mode
+            == WorldLocationViewMode.CHILD_FORM
+        ):
+            self.location_form.render(
+                screen
+            )
+            
+            return
         
         title = self.title_font.render(
             "Gerenciar Local",
@@ -131,6 +231,10 @@ class WorldLocationScreen:
         screen.blit(title, (80, 55))
         
         self.back_button.render(screen)
+        
+        self.new_child_button.render(
+            screen
+        )
         
         name = self.title_font.render(
             self.location.name,
@@ -253,3 +357,9 @@ class WorldLocationScreen:
             min(self.scroll_offset, max_scroll)
         )
 
+    def cancel_child_form(self):
+        self.location_form.clear()
+        
+        self.view_mode = (
+            WorldLocationViewMode.DETAILS
+        )
