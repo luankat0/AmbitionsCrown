@@ -1,6 +1,15 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.ui.button import Button
+from src.ui.location.location_form import (
+    LocationForm,
+)
+
+class WorldRegionViewMode(Enum):
+    DETAILS = auto()
+    LOCATION_FORM = auto()
 
 
 class WorldRegionScreen:
@@ -34,6 +43,18 @@ class WorldRegionScreen:
             80, 110,
             220, 45,
             "← Voltar ao Mundo"
+        )
+        
+        self.view_mode = WorldRegionViewMode.DETAILS
+        
+        self.location_form = LocationForm()
+        
+        self.new_location_button = Button(
+            650,
+            285,
+            190,
+            45,
+            "+ Novo Local"
         )
         
         self.locations = []
@@ -71,11 +92,35 @@ class WorldRegionScreen:
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
+            if (
+                self.view_mode
+                == WorldRegionViewMode.LOCATION_FORM
+            ):
+                self.cancel_location_form()
+                return
+            
             self.return_to_world()
+            return
+        
+        if (
+            self.view_mode
+            == WorldRegionViewMode.LOCATION_FORM
+        ):
+            self.handle_location_form_events(
+                event
+            )
             return
         
         if self.back_button.handle_event(event):
             self.return_to_world()
+            return
+        
+        if self.new_location_button.handle_event(event):
+            self.location_form.prepare_create()
+            
+            self.view_mode = (
+                WorldRegionViewMode.LOCATION_FORM
+            )
             return
         
         if event.type == pygame.MOUSEWHEEL:
@@ -101,6 +146,15 @@ class WorldRegionScreen:
             self.background_color
         )
         
+        if (
+            self.view_mode
+            == WorldRegionViewMode.LOCATION_FORM
+        ):
+            self.location_form.render(
+                screen
+            )
+            return
+        
         title_surface = (
             self.title_font.render(
                 "Gerenciar Região",
@@ -115,6 +169,10 @@ class WorldRegionScreen:
         )
         
         self.back_button.render(
+            screen
+        )
+        
+        self.new_location_button.render(
             screen
         )
         
@@ -270,4 +328,52 @@ class WorldRegionScreen:
                 self.scroll_offset,
                 max_scroll
             )
+        )
+        
+    def handle_location_form_events(self, event):
+        action = self.location_form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_location_form()
+            return
+        
+        if action == "submit":
+            self.create_location()
+            return
+        
+    def cancel_location_form(self):
+        self.location_form.clear()
+        
+        self.view_mode = (
+            WorldRegionViewMode.DETAILS
+        )
+        
+    def create_location(self):
+        if self.region.id is None:
+            return
+        
+        location = (
+            self.location_form.build_location(
+                region_id=self.region.id,
+                parent_location_id=None
+            )
+        )
+        
+        if location is None:
+            return
+        
+        self.app.location_repository.add(
+            location
+        )
+        
+        self.refresh_locations()
+        
+        self.scroll_offset = 0
+        
+        self.location_form.clear()
+        
+        self.view_mode = (
+            WorldRegionViewMode.DETAILS
         )
