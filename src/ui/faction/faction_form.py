@@ -8,6 +8,12 @@ from src.domain.campaign.models.campaign_faction import (
     CampaignFaction,
 )
 
+from src.domain.world.models.faction import (
+    Faction,
+    FactionStatus,
+    FactionType,
+)
+
 from src.ui.base_form import BaseForm
 from src.ui.button import Button
 from src.ui.text_area import TextArea
@@ -95,7 +101,7 @@ class FactionForm(BaseForm):
             self.notes_input,
         ]
         
-        self.edit_faction_id = None
+        self.editing_faction_id = None
         self.title_text = "Nova Facção"
 
         self.faction_types = list(
@@ -254,6 +260,23 @@ class FactionForm(BaseForm):
             ),
         )
 
+    def build_faction(self, world_id):
+        if not self.validate():
+            return None
+        
+        return Faction(
+            world_id=world_id,
+            name=self.name_input.text.strip(),
+            faction_type=self.selected_faction_type,
+            status=self.selected_faction_status,
+            description=(
+                self.description_input.text.strip()
+            ),
+            notes=(
+                self.notes_input.text.strip()
+            ),
+        )
+    
     def prepare_create(self):
         super().prepare_create()
         

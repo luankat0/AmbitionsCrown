@@ -1,11 +1,20 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.ui.button import Button
 
 from src.ui.faction.faction_labels import (
     get_faction_type_label,
     get_faction_status_label,
 )
+from src.ui.faction.faction_form import (
+    FactionForm,
+)
+
+class WorldFactionsViewMode(Enum):
+    LIST = auto()
+    FORM = auto()
 
 
 class WorldFactionsScreen:
@@ -23,6 +32,16 @@ class WorldFactionsScreen:
             80, 110,
             220, 45,
             "Voltar ao Mundo"
+        )
+        
+        self.view_mode = WorldFactionsViewMode.LIST
+        
+        self.faction_form = FactionForm()
+        
+        self.new_faction_button = Button(
+            650, 240,
+            190, 45,
+            "+ Nova Facção"
         )
 
         self.list_rect = pygame.Rect(
@@ -50,17 +69,45 @@ class WorldFactionsScreen:
         self._clamp_scroll()
 
     def handle_event(self, event):
+        
+        # Eventos de ESC
         if (
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
+            if (
+                self.view_mode
+                == WorldFactionsViewMode.FORM
+            ):
+                self.cancel_faction_form()
+                return
+            
             self.return_to_world()
             return
-
+        
+        # Eventos do Formulário
+        if (
+            self.view_mode
+            == WorldFactionsViewMode.FORM
+        ):
+            self.handle_faction_form_events(event)
+            return
+        
+        # Voltar ao World
         if self.back_button.handle_event(event):
             self.return_to_world()
             return
 
+        # Criar facção
+        if self.new_faction_button.handle_event(event):
+            self.faction_form.prepare_create()
+            
+            self.view_mode = (
+                WorldFactionsViewMode.FORM
+            )
+            return
+            
+        # Scroll da lista
         if event.type == pygame.MOUSEWHEEL:
             if self.list_rect.collidepoint(
                 pygame.mouse.get_pos()
@@ -81,6 +128,13 @@ class WorldFactionsScreen:
 
     def render(self, screen):
         screen.fill(self.background_color)
+        
+        if (
+            self.view_mode
+            == WorldFactionsViewMode.FORM
+        ):
+            self.faction_form.render(screen)
+            return
 
         title = self.title_font.render(
             "Facções do Mundo",
@@ -91,6 +145,8 @@ class WorldFactionsScreen:
         screen.blit(title, (80, 55))
 
         self.back_button.render(screen)
+        
+        self.new_faction_button.render(screen)
 
         world_name = self.name_font.render(
             self.world.name,
@@ -198,4 +254,49 @@ class WorldFactionsScreen:
         self.scroll_offset = max(
             0,
             min(self.scroll_offset, max_scroll)
+        )
+
+    def handle_faction_form_events(self, event):
+        action = self.faction_form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_faction_form()
+            return
+        
+        if action == "submit":
+            self.create_faction()
+            return
+        
+    def cancel_faction_form(self):
+        self.faction_form.clear()
+        
+        self.view_mode = (
+            WorldFactionsViewMode.LIST
+        )
+    
+    def create_faction(self):
+        if self.world.id is None:
+            return
+        
+        faction = self.faction_form.build_faction(
+            self.world.id
+        )
+        
+        if faction is None:
+            return
+        
+        self.app.faction_repository.add(
+            faction
+        )
+        
+        self.refresh_factions()
+        
+        self.scroll_offset = 0
+        
+        self.faction_form.clear()
+        
+        self.view_mode = (
+            WorldFactionsViewMode.LIST
         )
