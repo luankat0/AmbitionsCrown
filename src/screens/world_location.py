@@ -4,6 +4,14 @@ from enum import Enum, auto
 
 from src.ui.button import Button
 
+from src.ui.dialogs.confirm_dialog import (
+    ConfirmDialog,
+)
+
+from src.ui.dialogs.message_dialog import (
+    MessageDialog,
+)
+
 from src.ui.location.location_form import (
     LocationForm,
 )
@@ -57,6 +65,21 @@ class WorldLocationScreen:
             185,
             45,
             "Editar Local"
+        )
+        
+        self.delete_button = Button(
+            860,
+            285,
+            190,
+            45,
+            "Excluir Local"
+        )
+        
+        self.confirm_dialog = ConfirmDialog()
+        
+        self.message_dialog = MessageDialog(
+            "",
+            ""
         )
         
         self.children = []
@@ -114,6 +137,28 @@ class WorldLocationScreen:
         )
         
     def handle_event(self, event):
+        
+        # Modais de Dialogo
+        if self.message_dialog.visible:
+            self.message_dialog.handle_event(
+                event
+            )
+            return
+        
+        if self.confirm_dialog.visible:
+            action = self.confirm_dialog.handle_event(
+                event
+            )
+            
+            if action == "cancel":
+                self.confirm_dialog.close()
+                
+            elif action == "confirm":
+                self.confirm_delete_location()
+                
+            return
+        
+        # Eventos de ESC / Retornos
         if (
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
@@ -128,6 +173,7 @@ class WorldLocationScreen:
             self.navigate_back()
             return
         
+        # Eventos de Modos de Visualização
         if (
             self.view_mode
             == WorldLocationViewMode.EDIT_FORM
@@ -142,10 +188,12 @@ class WorldLocationScreen:
             self.handle_child_form_events(event)
             return
         
+        # Botão de voltar
         if self.back_button.handle_event(event):
             self.navigate_back()
             return
         
+        # Editar local / sublocal
         if self.edit_button.handle_event(event):
             self.location_form.prepare_edit(
                 self.location
@@ -157,6 +205,7 @@ class WorldLocationScreen:
             
             return
         
+        # Criação de Sublocais
         if self.new_child_button.handle_event(event):
             self.location_form.prepare_create()
             
@@ -166,6 +215,12 @@ class WorldLocationScreen:
             
             return
         
+        # Deletar local / sublocal
+        if self.delete_button.handle_event(event):
+            self.request_delete_location()
+            return
+        
+        # Abrir local
         if (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
@@ -179,7 +234,8 @@ class WorldLocationScreen:
                             child
                         )
                         return
-                    
+         
+        # Aplicação da função de Scroll           
         if event.type == pygame.MOUSEWHEEL:
             if self.list_rect.collidepoint(
                 pygame.mouse.get_pos()
@@ -313,6 +369,9 @@ class WorldLocationScreen:
         self.new_child_button.render(
             screen
         )
+        self.delete_button.render(
+            screen
+        )
         
         name = self.title_font.render(
             self.location.name,
@@ -347,6 +406,14 @@ class WorldLocationScreen:
         screen.blit(section, (80, 290))
         
         self.render_children(screen)
+        
+        self.message_dialog.render(
+            screen
+        )
+        
+        self.confirm_dialog.render(
+            screen
+        )
         
     def render_children(self, screen):
         self.child_card_rects = []
@@ -441,3 +508,63 @@ class WorldLocationScreen:
         self.view_mode = (
             WorldLocationViewMode.DETAILS
         )
+
+    def request_delete_location(self):
+        if self.location.id is None:
+            return
+        
+        children = (
+            self.app
+            .location_repository
+            .get_children(
+                self.location.id
+            )
+        )
+        
+        if children:
+            child_count = len(children)
+            
+            child_label = (
+                "sublocal"
+                if child_count == 1
+                else "sublocais"
+            )
+            
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                (
+                    f'Este local possui {child_count} '
+                    f'{child_label}'
+                )
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.confirm_dialog.open(
+            "Excluir local?",
+            (
+                f'Deseja excluir "{self.location.name}"?'
+            ),
+            "Esta ação não pode ser desfeita.",
+            "Excluir"
+        )
+
+    def confirm_delete_location(self):
+        self.confirm_dialog.close()
+        
+        try:
+            self.app.location_repository.delete(
+                self.location
+            )
+            
+        except ValueError as error:
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                str(error)
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.navigate_back()
