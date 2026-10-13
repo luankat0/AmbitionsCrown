@@ -1,11 +1,18 @@
 import pygame
 
+from enum import Enum, auto
+
 from src.ui.button import Button
 
 from src.ui.faction.faction_labels import (
     get_faction_type_label,
     get_faction_status_label,
 )
+from src.ui.faction.faction_form import FactionForm
+
+class WorldFactionViewMode(Enum):
+    DETAILS = auto()
+    EDIT_FORM = auto()
 
 
 class WorldFactionScreen:
@@ -25,6 +32,16 @@ class WorldFactionScreen:
             220, 45,
             "Voltar às Facções"
         )
+        
+        self.view_mode = WorldFactionViewMode.DETAILS
+        
+        self.faction_form = FactionForm()
+        
+        self.edit_button = Button(
+            330, 110,
+            190, 45,
+            "Editar Facção"
+        )
 
         self.content_rect = pygame.Rect(
             80, 175, 1080, 485
@@ -35,17 +52,46 @@ class WorldFactionScreen:
         self.content_height = 0
 
     def handle_event(self, event):
+        
+        # Tratamento do ESC
         if (
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
+            if (
+                self.view_mode
+                == WorldFactionViewMode.EDIT_FORM
+            ):
+                self.cancel_edit()
+                return
+            
             self.return_to_factions()
             return
-
+        
+        if (
+            self.view_mode
+            == WorldFactionViewMode.EDIT_FORM
+        ):
+            self.handle_edit_form_events(event)
+            return
+        
+        # Voltar à lista
         if self.back_button.handle_event(event):
             self.return_to_factions()
             return
 
+        # Editar Facção
+        if self.edit_button.handle_event(event):
+            self.faction_form.prepare_edit(
+                self.faction
+            )
+            
+            self.view_mode = (
+                WorldFactionViewMode.EDIT_FORM
+            )
+            return
+        
+        # Scroll dos detalhes
         if event.type == pygame.MOUSEWHEEL:
             if self.content_rect.collidepoint(
                 pygame.mouse.get_pos()
@@ -66,6 +112,13 @@ class WorldFactionScreen:
 
     def render(self, screen):
         screen.fill(self.background_color)
+        
+        if (
+            self.view_mode
+            == WorldFactionViewMode.EDIT_FORM
+        ):
+            self.faction_form.render(screen)
+            return
 
         title = self.title_font.render(
             "Detalhes da Facção",
@@ -76,6 +129,8 @@ class WorldFactionScreen:
         screen.blit(title, (80, 55))
 
         self.back_button.render(screen)
+        
+        self.edit_button.render(screen)
 
         previous_clip = screen.get_clip()
         screen.set_clip(self.content_rect)
@@ -241,3 +296,63 @@ class WorldFactionScreen:
             min(self.scroll_offset, max_scroll)
         )
 
+    def handle_edit_form_events(self, event):
+        action = self.faction_form.handle_event(
+            event
+        )    
+        
+        if action == "cancel":
+            self.cancel_edit()
+            return
+        
+        if action == "submit":
+            self.update_faction()
+            return
+        
+    def cancel_edit(self):
+        self.faction_form.clear()
+        
+        self.view_mode = (
+            WorldFactionViewMode.DETAILS
+        )
+        
+    def update_faction(self):
+        if (
+            self.world.id is None
+            or self.faction.id is None
+        ):
+            return
+        
+        updated_faction = (
+            self.faction_form.build_faction(
+                self.world.id
+            )
+        )
+        
+        if updated_faction is None:
+            return
+        
+        # Preserva a identidade da facção
+        updated_faction.id = self.faction.id
+        
+        self.app.faction_repository.update(
+            updated_faction
+        )
+        
+        # Recarrega os dados persistidos
+        refreshed_faction = (
+            self.app.faction_repository.get_by_id(
+                self.faction.id
+            )
+        )
+        
+        if refreshed_faction is not None:
+            self.faction = refreshed_faction
+            
+        self.faction_form.clear()
+        
+        self.scroll_offset = 0
+        
+        self.view_mode = (
+            WorldFactionViewMode.DETAILS
+        )
