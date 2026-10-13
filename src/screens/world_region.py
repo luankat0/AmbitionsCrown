@@ -3,13 +3,18 @@ import pygame
 from enum import Enum, auto
 
 from src.ui.button import Button
-from src.ui.location.location_form import (
-    LocationForm,
-)
+
+from src.ui.dialogs.confirm_dialog import ConfirmDialog
+from src.ui.dialogs.message_dialog import MessageDialog
+
+from src.ui.region.region_form import RegionForm
+from src.ui.location.location_form import LocationForm
+
 
 class WorldRegionViewMode(Enum):
     DETAILS = auto()
     LOCATION_FORM = auto()
+    REGION_FORM = auto()
 
 
 class WorldRegionScreen:
@@ -57,6 +62,25 @@ class WorldRegionScreen:
             "+ Novo Local"
         )
         
+        self.region_form = RegionForm()
+        
+        self.edit_region_button = Button(
+            440, 285, 185, 45,
+            "Editar Região"
+        )
+                
+        self.delete_region_button = Button(
+            860, 285, 190, 45,
+            "Excluir Região"
+        )
+                
+        self.confirm_dialog = ConfirmDialog()
+                
+        self.message_dialog = MessageDialog(
+            "",
+            ""
+        )
+        
         self.locations = []
         self.location_card_rects = []
         
@@ -89,10 +113,40 @@ class WorldRegionScreen:
         ]
         
     def handle_event(self, event):
+        
+        # Diálogos com Prioridade
+        if self.message_dialog.visible:
+            self.message_dialog.handle_event(
+                event
+            )
+            return
+
+        if self.confirm_dialog.visible:
+            action = self.confirm_dialog.handle_event(
+                event
+            )
+            
+            if action == "cancel":
+                self.confirm_dialog.close()
+                
+            if action == "confirm":
+                self.confirm_delete_region()
+                return
+            
+            return
+        
+        # Tratamento do ESC / Retorno
         if (
             event.type == pygame.KEYDOWN
             and event.key == pygame.K_ESCAPE
         ):
+            if (
+                self.view_mode
+                == WorldRegionViewMode.REGION_FORM
+            ):
+                self.cancel_region_form()
+                return
+            
             if (
                 self.view_mode
                 == WorldRegionViewMode.LOCATION_FORM
@@ -101,6 +155,14 @@ class WorldRegionScreen:
                 return
             
             self.return_to_world()
+            return
+        
+        # Tratamento de Acesso aos FORMs
+        if (
+            self.view_mode
+            == WorldRegionViewMode.REGION_FORM
+        ):
+            self.handle_region_form_events(event)
             return
         
         if (
@@ -112,10 +174,28 @@ class WorldRegionScreen:
             )
             return
         
+        # Botão Voltar
         if self.back_button.handle_event(event):
             self.return_to_world()
             return
         
+        # Botão Editar Região
+        if self.edit_region_button.handle_event(event):
+            self.region_form.prepare_edit(
+                self.region
+            )
+            
+            self.view_mode = (
+                WorldRegionViewMode.REGION_FORM
+            )
+            return
+        
+        # Botão Deletar Região
+        if self.delete_region_button.handle_event(event):
+            self.request_delete_region()
+            return
+            
+        # Botão Criar Novo Local
         if self.new_location_button.handle_event(event):
             self.location_form.prepare_create()
             
@@ -163,11 +243,16 @@ class WorldRegionScreen:
         
         if (
             self.view_mode
+            == WorldRegionViewMode.REGION_FORM
+        ):
+            self.region_form.render(screen)
+            return
+        
+        if (
+            self.view_mode
             == WorldRegionViewMode.LOCATION_FORM
         ):
-            self.location_form.render(
-                screen
-            )
+            self.location_form.render(screen)
             return
         
         title_surface = (
@@ -184,6 +269,14 @@ class WorldRegionScreen:
         )
         
         self.back_button.render(
+            screen
+        )
+        
+        self.edit_region_button.render(
+            screen
+        )
+        
+        self.delete_region_button.render(
             screen
         )
         
@@ -236,6 +329,14 @@ class WorldRegionScreen:
         )
         
         self.render_locations(
+            screen
+        )
+        
+        self.message_dialog.render(
+            screen
+        )
+
+        self.confirm_dialog.render(
             screen
         )
         
@@ -398,3 +499,121 @@ class WorldRegionScreen:
         self.view_mode = (
             WorldRegionViewMode.DETAILS
         )
+
+    def handle_region_form_events(self, event):
+        action = self.region_form.handle_event(
+            event
+        )
+        
+        if action == "cancel":
+            self.cancel_region_form()
+            return
+        
+        if action == "submit":
+            self.update_region()
+            return
+        
+    def cancel_region_form(self):
+        self.region_form.clear()
+        
+        self.view_mode = (
+            WorldRegionViewMode.DETAILS
+        )
+        
+    def update_region(self):
+        if (
+            self.world.id is None
+            or self.region.id is None
+        ):
+            return
+        
+        updated_region = (
+            self.region_form.build_region(
+                self.world.id
+            )
+        )
+        
+        if updated_region is None:
+            return
+        
+        updated_region.id = self.region.id
+        
+        self.app.region_repository.update(
+            updated_region
+        )
+        
+        refreshed_region = (
+            self.app
+            .region_repository
+            .get_by_id(
+                self.region.id
+            )
+        )
+        
+        if refreshed_region is not None:
+            self.region = refreshed_region
+            
+        self.region_form.clear()
+        
+        self.view_mode = (
+            WorldRegionViewMode.DETAILS
+        )
+
+    def request_delete_region(self):
+        if self.region.id is None:
+            return
+        
+        locations = (
+            self.app
+            .location_repository
+            .get_all_by_region(
+                self.region.id
+            )
+        )
+        
+        if locations:
+            location_count = len(locations)
+            
+            label = (
+                "local"
+                if location_count == 1
+                else "locais"
+            )
+            
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                (
+                    f'Esta região possui '
+                    f'{location_count} {label}'
+                )
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.confirm_dialog.open(
+            "Excluir região?",
+            (
+                f'Deseja excluir "{self.region.name}"?'
+            ),
+            "Esta ação não pode ser desfeita.",
+            "Excluir"
+        )
+    
+    def confirm_delete_region(self):
+        self.confirm_dialog.close()
+        
+        try:
+            self.app.region_repository.delete(
+                self.region
+            )
+            
+        except ValueError as error:
+            self.message_dialog.set_message(
+                "Não é possível excluir",
+                str(error)
+            )
+            self.message_dialog.open()
+            return
+        
+        self.return_to_world()
