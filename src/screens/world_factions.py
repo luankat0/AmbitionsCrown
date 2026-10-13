@@ -52,6 +52,8 @@ class WorldFactionsScreen:
         self.scroll_speed = 40
 
         self.factions = []
+        
+        self.faction_card_rects = []
 
         self.refresh_factions()
 
@@ -106,6 +108,20 @@ class WorldFactionsScreen:
                 WorldFactionsViewMode.FORM
             )
             return
+        
+        # Abrir uma facção canônica
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            if self.list_rect.collidepoint(event.pos):
+                for faction, rect in self.faction_card_rects:
+                    if rect.collidepoint(event.pos):
+                        self.app.open_world_faction(
+                            self.world,
+                            faction
+                        )
+                        return
             
         # Scroll da lista
         if event.type == pygame.MOUSEWHEEL:
@@ -167,6 +183,8 @@ class WorldFactionsScreen:
         self.render_factions(screen)
 
     def render_factions(self, screen):
+        self.faction_card_rects = []
+        
         if not self.factions:
             message = self.info_font.render(
                 "Este mundo ainda não possui facções.",
@@ -192,6 +210,10 @@ class WorldFactionsScreen:
             rect = pygame.Rect(
                 80, y,
                 760, 95
+            )
+            
+            self.faction_card_rects.append(
+                (faction, rect)
             )
 
             pygame.draw.rect(
