@@ -43,11 +43,15 @@ class WorldManagerScreen:
         )
         
         self.new_region_button = Button(
-            650,
-            225,
-            190,
-            45,
+            650, 225,
+            190, 45,
             "+ Nova Região"
+        )
+        
+        self.factions_button = Button(
+            330, 110,
+            220, 45,
+            "Facções do Mundo"
         )
         
         self.regions = []
@@ -115,6 +119,12 @@ class WorldManagerScreen:
             
             self.view_mode = (
                 WorldManagerViewMode.REGION_FORM
+            )
+            return
+        
+        if self.factions_button.handle_event(event):
+            self.app.open_world_factions(
+                self.world
             )
             return
         
@@ -225,6 +235,8 @@ class WorldManagerScreen:
         self.back_button.render(
             screen
         )
+        
+        self.factions_button.render(screen)
         
         self.new_region_button.render(screen)
         

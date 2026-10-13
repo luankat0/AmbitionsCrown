@@ -49,6 +49,10 @@ from src.screens.world_location import (
     WorldLocationScreen,
 )
 
+from src.screens.world_factions import (
+    WorldFactionsScreen,
+)
+
 class App:
     def __init__(self):
         pygame.init()
@@ -314,4 +318,12 @@ class App:
                 region,
                 location
             )
+        )
+
+    def open_world_factions(self, world):
+        self.close_campaign()
+        
+        self.current_screen = WorldFactionsScreen(
+            self,
+            world
         )
