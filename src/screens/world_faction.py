@@ -1,8 +1,12 @@
 import pygame
+import sqlite3
 
 from enum import Enum, auto
 
 from src.ui.button import Button
+
+from src.ui.dialogs.confirm_dialog import ConfirmDialog
+from src.ui.dialogs.message_dialog import MessageDialog
 
 from src.ui.faction.faction_labels import (
     get_faction_type_label,
@@ -42,6 +46,19 @@ class WorldFactionScreen:
             190, 45,
             "Editar Facção"
         )
+        
+        self.delete_button = Button(
+            550, 110,
+            190, 45,
+            "Excluir Facção"
+        )
+        
+        self.confirm_dialog = ConfirmDialog()
+        
+        self.message_dialog = MessageDialog(
+            "",
+            ""
+        )
 
         self.content_rect = pygame.Rect(
             80, 175, 1080, 485
@@ -52,6 +69,25 @@ class WorldFactionScreen:
         self.content_height = 0
 
     def handle_event(self, event):
+        
+        # Diálogo de Mensagem
+        if self.message_dialog.visible:
+            self.message_dialog.handle_event(event)
+            return
+        
+        # Diálogo de confirmação
+        if self.confirm_dialog.visible:
+            action = self.confirm_dialog.handle_event(event)
+            
+            if action == "cancel":
+                self.confirm_dialog.close()
+                return
+            
+            if action == "confirm":
+                self.confirm_delete_faction()
+                return
+            
+            return
         
         # Tratamento do ESC
         if (
@@ -89,6 +125,11 @@ class WorldFactionScreen:
             self.view_mode = (
                 WorldFactionViewMode.EDIT_FORM
             )
+            return
+        
+        # Excluir Facção
+        if self.delete_button.handle_event(event):
+            self.request_delete_faction()
             return
         
         # Scroll dos detalhes
@@ -131,6 +172,8 @@ class WorldFactionScreen:
         self.back_button.render(screen)
         
         self.edit_button.render(screen)
+        
+        self.delete_button.render(screen)
 
         previous_clip = screen.get_clip()
         screen.set_clip(self.content_rect)
@@ -216,6 +259,10 @@ class WorldFactionScreen:
         screen.set_clip(previous_clip)
 
         self._clamp_scroll()
+        
+        self.message_dialog.render(screen)
+        
+        self.confirm_dialog.render(screen)
 
     def render_text_section(
         self,
@@ -356,3 +403,35 @@ class WorldFactionScreen:
         self.view_mode = (
             WorldFactionViewMode.DETAILS
         )
+
+    def request_delete_faction(self):
+        if self.faction.id is None:
+            return
+        
+        self.confirm_dialog.open(
+            "Excluir facção?",
+            (
+                f'Deseja excluir "{self.faction.name}"?'
+            ),
+            "Esta ação não pode ser desfeita",
+            "Excluir"
+        )
+
+    def confirm_delete_faction(self):
+        self.confirm_dialog.close()
+        
+        try:
+            self.app.faction_repository.delete(
+                self.faction
+            )
+        
+        except (ValueError, sqlite3.Error) as error:
+            self.message_dialog.set_message(
+                "Não foi possível excluir",
+                str(error)
+            )
+            
+            self.message_dialog.open()
+            return
+        
+        self.return_to_factions()
