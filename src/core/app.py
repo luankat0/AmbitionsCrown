@@ -49,10 +49,10 @@ from src.screens.world.locations.detail import (
     WorldLocationScreen,
 )
 
-from src.screens.world_factions import (
+from src.screens.world.factions.list import (
     WorldFactionsScreen,
 )
-from src.screens.world_faction import (
+from src.screens.world.factions.detail import (
     WorldFactionScreen,
 )
 
