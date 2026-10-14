@@ -36,10 +36,10 @@ from src.screens.regions import RegionScreen
 from src.screens.locations import LocationScreen
 from src.screens.factions import FactionScreen
 
-from src.screens.world_library import (
+from src.screens.world.library import (
     WorldLibraryScreen,
 )
-from src.screens.world_manager import (
+from src.screens.world.overview import (
     WorldManagerScreen,
 )
 from src.screens.world_region import (
