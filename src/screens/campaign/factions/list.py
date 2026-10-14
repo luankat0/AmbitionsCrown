@@ -132,19 +132,16 @@ class FactionScreen(BaseScreen):
                 return
             
         if self.view_mode == FactionViewMode.FORM:
-            self.handle_faction_form_events(
-                event
-            )
+            self.handle_faction_form_events(event)
             return
         
         if self.view_mode == FactionViewMode.DETAILS:
-            self.handle_details_events(
-                event
-            )
-        
-        self.handle_list_events(
-            event
-        )
+            self.handle_details_events(event)
+            return
+            
+        if self.view_mode == FactionViewMode.LIST:
+            self.handle_list_events(event)
+            return
         
     def handle_list_events(
         self,
