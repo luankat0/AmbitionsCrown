@@ -90,6 +90,43 @@ class CampaignRepository:
             
         cursor = self.database.connection.cursor()
         
+        # Consulta o estado persistido da Campaign
+        cursor.execute(
+            """ 
+            SELECT world_id, snapshot_created_at
+            FROM campaigns
+            WHERE id = ?
+            """,
+            (campaign.id,)
+        )
+        
+        persisted = cursor.fetchone()
+        
+        if persisted is None:
+            raise ValueError(
+                "A campanha informada não existe."
+            )
+        
+        # O snapshot só pode ser marcado pelo método específico
+        if (
+            campaign.snapshot_created_at
+            != persisted["snapshot_created_at"]
+        ):
+            raise ValueError(
+                "Não é possível alterar o snapshot da campanha "
+                "pelo método update()."
+            )
+        
+        # Depois do snapshot, o World é imutável
+        if (
+            persisted["snapshot_created_at"] is not None
+            and campaign.world_id != persisted["world_id"]
+        ):
+            raise ValueError(
+                "Não é possível alterar o mundo de uma campanha "
+                "após a criação do snapshot."
+            )
+        
         cursor.execute(
             """
             UPDATE campaigns
@@ -99,7 +136,6 @@ class CampaignRepository:
                 notes = ?,
                 status = ?,
                 world_id = ?,
-                snapshot_created_at = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
@@ -109,7 +145,6 @@ class CampaignRepository:
                 campaign.notes,
                 campaign.status.value,
                 campaign.world_id,
-                campaign.snapshot_created_at,
                 campaign.id
             )
         )
@@ -170,3 +205,4 @@ class CampaignRepository:
         )
         
         return campaign
+
