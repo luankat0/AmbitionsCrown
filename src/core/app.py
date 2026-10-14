@@ -2,6 +2,7 @@ import pygame
 
 from src.core.database import Database
 from src.core.navigation import Navigator
+from src.core.workspace import Workspace
 from src.core.bootstrap import build_dependencies
 
 from src.domain.campaign.models.campaign import Campaign
@@ -48,7 +49,7 @@ class App:
             self.campaign_location_repository
         )
         
-        self.current_campaign: Campaign | None = None
+        self.workspace = Workspace()
 
         self.width = 1280
         self.height = 720
@@ -67,6 +68,10 @@ class App:
         self.current_screen = CampaignScreen(
             self
         )
+
+    @property
+    def current_campaign(self) -> Campaign | None:
+        return self.workspace.current_campaign
 
     def change_screen(
         self, 
@@ -130,14 +135,11 @@ class App:
         
         pygame.quit()
         
-    def select_campaign(
-        self,
-        campaign: Campaign
-    ):
-        self.current_campaign = campaign
+    def select_campaign(self, campaign: Campaign):
+        self.workspace.select_campaign(campaign)
         
     def close_campaign(self):
-        self.current_campaign = None
+        self.workspace.close_campaign()
         
     def return_to_campaigns(self):
         self.close_campaign()
