@@ -19,19 +19,39 @@ class WorldRegionIntegrityTests(unittest.TestCase):
         self.factions = FactionRepository(self.database)
 
     def test_create_region_in_existing_world(self):
-        world = self.worlds.add(World(name='Mundo de teste'))
+        world = self.worlds.add(
+            World(name='Mundo de teste')
+        )
+        assert world.id is not None
+        
         region = self.regions.add(
-            Region(world_id=world.id, name='Região válida')
+            Region(
+                world_id=world.id, 
+                name='Região válida'
+            )
+        )
+        assert region.id is not None
+        
+        saved = self.regions.get_by_id(
+            region.id
+        )
+        assert saved is not None
+        
+        self.assertEqual(
+            saved.world_id,
+            world.id
+        )
+        
+        self.assertEqual(
+            saved.name,
+            "Região válida"
         )
 
-        self.assertIsNotNone(region.id)
-        saved = self.regions.get_by_id(region.id)
-        self.assertIsNotNone(saved)
-        self.assertEqual(saved.world_id, world.id)
-        self.assertEqual(saved.name, 'Região válida')
-
     def test_reject_region_when_world_does_not_exist(self):
-        region = Region(world_id=999_999, name='Região órfã')
+        region = Region(
+            world_id=999_999, 
+            name='Região órfã'
+        )
 
         with self.assertRaisesRegex(ValueError, 'mundo'):
             self.regions.add(region)
@@ -42,7 +62,11 @@ class WorldRegionIntegrityTests(unittest.TestCase):
         self.assertEqual(count, 0)
 
     def test_reject_world_deletion_when_it_has_regions(self):
-        world = self.worlds.add(World(name='Mundo com região'))
+        world = self.worlds.add(
+            World(name='Mundo com região')
+        )
+        assert world.id is not None
+        
         self.regions.add(Region(world_id=world.id, name='Região filha'))
 
         with self.assertRaisesRegex(ValueError, 'regiões'):
@@ -51,7 +75,11 @@ class WorldRegionIntegrityTests(unittest.TestCase):
         self.assertIsNotNone(self.worlds.get_by_id(world.id))
 
     def test_reject_world_deletion_when_it_has_factions(self):
-        world = self.worlds.add(World(name='Mundo com facção'))
+        world = self.worlds.add(
+            World(name='Mundo com facção')
+        )
+        assert world.id is not None
+        
         self.factions.add(Faction(world_id=world.id, name='Facção filha'))
 
         with self.assertRaisesRegex(ValueError, 'facções'):

@@ -53,6 +53,22 @@ class LocationRepository:
         )
         
         cursor.execute(
+            """ 
+            SELECT 1
+            FROM regions
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (location.region_id,)
+        )
+        
+        if cursor.fetchone() is None:
+            raise ValueError(
+                "Não é possível criar o local: "
+                "a região informada não existe."
+            )
+        
+        cursor.execute(
             """
             INSERT INTO locations (
                 region_id,
