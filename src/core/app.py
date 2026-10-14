@@ -29,7 +29,7 @@ from src.domain.campaign.services.campaign_snapshot_service import (
 
 
 from src.screens.campaign.dashboard import DashboardScreen
-from src.screens.npcs import NPCScreen
+from src.screens.campaign.npcs.list import NPCScreen
 from src.screens.campaign.list import CampaignScreen
 from src.screens.campaign.world_overview import WorldScreen
 from src.screens.campaign.regions.detail import RegionScreen
