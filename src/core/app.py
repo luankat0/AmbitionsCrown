@@ -11,7 +11,7 @@ from src.domain.campaign.services.campaign_snapshot_service import (
     CampaignSnapshotService,
 )
 
-from src.screens.campaign.list import CampaignScreen
+from src.screens.base_screen import BaseScreen
 
 
 class App:
@@ -62,12 +62,12 @@ class App:
 
         self.clock = pygame.time.Clock()
         self.running = True
+        
+        self.current_screen: BaseScreen
 
         self.navigator = Navigator(self)
         
-        self.current_screen = CampaignScreen(
-            self
-        )
+        self.navigator.open_campaigns()
 
     @property
     def current_campaign(self) -> Campaign | None:
