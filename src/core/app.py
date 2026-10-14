@@ -2,26 +2,10 @@ import pygame
 
 from src.core.database import Database
 
-
-from src.repositories.npc_repository import NPCRepository
-from src.domain.world.repositories.world_repository import WorldRepository
-from src.domain.world.repositories.region_repository import RegionRepository
-from src.domain.world.repositories.location_repository import LocationRepository
-from src.domain.world.repositories.faction_repository import FactionRepository
-
-
 from src.domain.campaign.models.campaign import Campaign
 
-from src.domain.campaign.repositories.campaign_repository import CampaignRepository
-from src.domain.campaign.repositories.campaign_faction_repository import (
-    CampaignFactionRepository
-)
-from src.domain.campaign.repositories.campaign_region_repository import (
-    CampaignRegionRepository,
-)
-from src.domain.campaign.repositories.campaign_location_repository import (
-    CampaignLocationRepository,
-)
+from src.core.bootstrap import build_dependencies
+
 
 from src.domain.campaign.services.campaign_snapshot_service import (
     CampaignSnapshotService,
@@ -63,42 +47,24 @@ class App:
         self.database = Database()
         self.database.create_tables()
         
-        self.npc_repository = NPCRepository(
-            self.database
+        dependencies = build_dependencies(self.database)
+
+        self.npc_repository = dependencies.npc_repository
+
+        self.world_repository = dependencies.world_repository
+        self.region_repository = dependencies.region_repository
+        self.location_repository = dependencies.location_repository
+        self.faction_repository = dependencies.faction_repository
+
+        self.campaign_repository = dependencies.campaign_repository
+        self.campaign_region_repository = dependencies.campaign_region_repository
+        self.campaign_location_repository = dependencies.campaign_location_repository
+        self.campaign_faction_repository = dependencies.campaign_faction_repository
+
+        self.campaign_snapshot_service = (
+            dependencies.campaign_snapshot_service
         )
-        
-        self.campaign_repository = CampaignRepository(
-            self.database
-        )
-        
-        self.world_repository = WorldRepository(
-            self.database
-        )
-        
-        self.region_repository = RegionRepository(
-            self.database
-        )
-        
-        self.location_repository = LocationRepository(
-            self.database
-        )
-        
-        self.faction_repository = FactionRepository(
-            self.database
-        )
-        
-        self.campaign_faction_repository = CampaignFactionRepository(
-            self.database
-        )
-        
-        self.campaign_region_repository = CampaignRegionRepository(
-            self.database
-        )
-        
-        self.campaign_location_repository = CampaignLocationRepository(
-            self.database
-        )
-        
+                
         self.campaign_snapshot_service = CampaignSnapshotService(
             self.campaign_repository,
             self.faction_repository,
