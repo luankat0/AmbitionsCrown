@@ -1,6 +1,7 @@
 import pygame
 
 from src.core.database import Database
+from src.core.navigation import Navigator
 
 from src.domain.campaign.models.campaign import Campaign
 
@@ -12,10 +13,8 @@ from src.domain.campaign.services.campaign_snapshot_service import (
 )
 
 
-from src.screens.campaign.dashboard import DashboardScreen
 from src.screens.campaign.npcs.list import NPCScreen
 from src.screens.campaign.list import CampaignScreen
-from src.screens.campaign.world_overview import WorldScreen
 from src.screens.campaign.regions.detail import RegionScreen
 from src.screens.campaign.locations.detail import LocationScreen
 from src.screens.campaign.factions.list import FactionScreen
@@ -89,6 +88,8 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
 
+        self.navigator = Navigator(self)
+        
         self.current_screen = CampaignScreen(
             self
         )
@@ -199,25 +200,13 @@ class App:
         )
 
     def open_campaigns(self):
-        self.current_screen = (
-            CampaignScreen(self)
-        )
+        self.navigator.open_campaigns()
         
     def open_dashboard(self):
-        if self.current_campaign is None:
-            return
-        
-        self.current_screen = (
-            DashboardScreen(self)
-        )
+        self.navigator.open_dashboard()
     
     def open_world(self):
-        if self.current_campaign is None:
-            return
-        
-        self.current_screen = (
-            WorldScreen(self)
-        )
+        self.navigator.open_world()
     
     def open_npcs(self):
         if self.current_campaign is None:
