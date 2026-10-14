@@ -32,8 +32,8 @@ from src.screens.campaign.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
 from src.screens.campaign.list import CampaignScreen
 from src.screens.campaign.world_overview import WorldScreen
-from src.screens.regions import RegionScreen
-from src.screens.locations import LocationScreen
+from src.screens.campaign.regions.detail import RegionScreen
+from src.screens.campaign.locations.detail import LocationScreen
 from src.screens.factions import FactionScreen
 
 from src.screens.world.library import (
