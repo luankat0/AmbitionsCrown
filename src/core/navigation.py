@@ -8,6 +8,10 @@ from src.screens.campaign.npcs.list import NPCScreen
 
 from src.screens.world.library import WorldLibraryScreen
 from src.screens.world.overview import WorldManagerScreen
+from src.screens.world.regions.detail import WorldRegionScreen
+from src.screens.world.locations.detail import WorldLocationScreen
+from src.screens.world.factions.list import WorldFactionsScreen
+from src.screens.world.factions.detail import WorldFactionScreen
 
 
 class Navigator:
@@ -83,5 +87,41 @@ class Navigator:
         self.app.current_screen = WorldManagerScreen(
             self.app,
             world
+        )
+
+    def open_world_region(self, world, region):
+        self.app.close_campaign()
+
+        self.app.current_screen = WorldRegionScreen(
+            self.app,
+            world,
+            region
+        )
+
+    def open_world_location(self, world, region, location):
+        self.app.close_campaign()
+
+        self.app.current_screen = WorldLocationScreen(
+            self.app,
+            world,
+            region,
+            location
+        )
+
+    def open_world_factions(self, world):
+        self.app.close_campaign()
+
+        self.app.current_screen = WorldFactionsScreen(
+            self.app,
+            world
+        )
+
+    def open_world_faction(self, world, faction):
+        self.app.close_campaign()
+
+        self.app.current_screen = WorldFactionScreen(
+            self.app,
+            world,
+            faction
         )
 

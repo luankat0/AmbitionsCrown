@@ -12,10 +12,6 @@ from src.domain.campaign.services.campaign_snapshot_service import (
 
 from src.screens.campaign.list import CampaignScreen
 
-from src.screens.world.regions.detail import WorldRegionScreen
-from src.screens.world.locations.detail import WorldLocationScreen
-from src.screens.world.factions.list import WorldFactionsScreen
-from src.screens.world.factions.detail import WorldFactionScreen
 
 class App:
     def __init__(self):
@@ -177,57 +173,15 @@ class App:
     def open_world_manager(self, world):
         self.navigator.open_world_manager(world)
     
-    def open_world_region(
-        self,
-        world,
-        region
-    ):
-        self.close_campaign()
+    def open_world_region(self, world, region):
+        self.navigator.open_world_region(world, region)
         
-        self.current_screen = (
-            WorldRegionScreen(
-                self,
-                world,
-                region
-            )
-        )
-        
-    def open_world_location(
-        self,
-        world,
-        region,
-        location
-    ):
-        self.close_campaign()
-        
-        self.current_screen = (
-            WorldLocationScreen(
-                self,
-                world,
-                region,
-                location
-            )
-        )
+    def open_world_location(self, world, region, location):
+        self.navigator.open_world_location(world, region, location)
 
     def open_world_factions(self, world):
-        self.close_campaign()
-        
-        self.current_screen = WorldFactionsScreen(
-            self,
-            world
-        )
+        self.navigator.open_world_factions(world)
 
-    def open_world_faction(
-        self,
-        world,
-        faction
-    ):
-        self.close_campaign()
-        
-        self.current_screen = (
-            WorldFactionScreen(
-                self,
-                world,
-                faction
-            )
-        )
+    def open_world_faction(self, world, faction):
+        self.navigator.open_world_faction(world, faction)
+

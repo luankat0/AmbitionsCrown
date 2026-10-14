@@ -16,6 +16,67 @@ class NavigationTests(unittest.TestCase):
 
         self.navigator = Navigator(self.app)
 
+    def assert_world_route_closes_campaign(
+        self,
+        method_name,
+        screen_class_name,
+        *screen_args
+    ):
+        self.app.current_campaign = SimpleNamespace(
+            id=1,
+            world_id=2
+        )
+
+        self.app.current_screen = sentinel.previous_screen
+
+        close_campaign = Mock(
+            side_effect=lambda: setattr(
+                self.app,
+                "current_campaign",
+                None
+            )
+        )
+
+        self.app.close_campaign = close_campaign
+
+        def create_screen(*received_args):
+            # A Campaign precisa ser encerrada
+            # antes da criação da próxima tela.
+            self.assertIsNone(
+                self.app.current_campaign
+            )
+
+            self.assertEqual(
+                received_args,
+                (self.app, *screen_args)
+            )
+
+            return sentinel.destination_screen
+
+        with patch(
+            f"src.core.navigation.{screen_class_name}",
+            side_effect=create_screen
+        ) as screen_class:
+
+            route = getattr(
+                self.navigator,
+                method_name
+            )
+
+            route(*screen_args)
+
+            close_campaign.assert_called_once_with()
+
+            screen_class.assert_called_once_with(
+                self.app,
+                *screen_args
+            )
+
+            self.assertIs(
+                self.app.current_screen,
+                sentinel.destination_screen
+            )
+
     def test_open_campaigns(self):
         with patch(
             "src.core.navigation.CampaignScreen"
@@ -287,6 +348,38 @@ class NavigationTests(unittest.TestCase):
                 self.app.current_screen,
                 sentinel.world_manager_screen
             )
+
+    def test_world_region_navigation(self):
+        self.assert_world_route_closes_campaign(
+            "open_world_region",
+            "WorldRegionScreen",
+            sentinel.canonical_world,
+            sentinel.region
+        )
+
+    def test_world_location_navigation(self):
+        self.assert_world_route_closes_campaign(
+            "open_world_location",
+            "WorldLocationScreen",
+            sentinel.canonical_world,
+            sentinel.region,
+            sentinel.location
+        )
+
+    def test_world_factions_navigation(self):
+        self.assert_world_route_closes_campaign(
+            "open_world_factions",
+            "WorldFactionsScreen",
+            sentinel.canonical_world
+        )
+
+    def test_world_faction_navigation(self):
+        self.assert_world_route_closes_campaign(
+            "open_world_faction",
+            "WorldFactionScreen",
+            sentinel.canonical_world,
+            sentinel.faction
+        )
 
 if __name__ == "__main__":
     unittest.main()
