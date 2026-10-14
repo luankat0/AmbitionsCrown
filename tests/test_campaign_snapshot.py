@@ -1,9 +1,12 @@
 import unittest
+from unittest.mock import patch
 
 from src.core.database import Database
 
 from src.domain.world.models.world import World
 from src.domain.world.models.faction import Faction
+from src.domain.world.models.region import Region
+from src.domain.world.models.location import Location
 
 from src.domain.world.repositories.world_repository import WorldRepository
 from src.domain.world.repositories.region_repository import RegionRepository
@@ -72,6 +75,65 @@ class CampaignSnapshotTests(unittest.TestCase):
         )
         assert faction.id is not None
         return faction
+    
+    def prepare_world_for_rollback(self):
+        region = self.regions.add(
+            Region(
+                world_id=self.world_id,
+                name="Região de teste"
+            )
+        )
+        assert region.id is not None
+
+        location = self.locations.add(
+            Location(
+                region_id=region.id,
+                name="Cidade de teste"
+            )
+        )
+        assert location.id is not None
+
+        self.create_faction("Alfa")
+        self.create_faction("Zeta")
+
+
+    def assert_snapshot_rolled_back(self):
+        self.assertEqual(
+            self.campaign_regions.get_all_by_campaign(
+                self.campaign_id
+            ),
+            []
+        )
+
+        self.assertEqual(
+            self.campaign_locations.get_all_by_campaign(
+                self.campaign_id
+            ),
+            []
+        )
+
+        self.assertEqual(
+            self.campaign_factions.get_all_by_campaign(
+                self.campaign_id
+            ),
+            []
+        )
+
+        row = self.database.connection.execute(
+            """
+            SELECT snapshot_created_at
+            FROM campaigns
+            WHERE id = ?
+            """,
+            (self.campaign_id,)
+        ).fetchone()
+
+        assert row is not None
+
+        self.assertIsNone(row["snapshot_created_at"])
+        self.assertIsNone(
+            self.campaign.snapshot_created_at
+        )
 
     def test_initial_snapshot_copies_factions(self):
         alpha = self.create_faction("Alfa")
@@ -157,6 +219,101 @@ class CampaignSnapshotTests(unittest.TestCase):
 
         self.assertEqual(len(copied), 1)
 
+    def test_rollback_when_faction_copy_fails(self):
+        self.prepare_world_for_rollback()
+
+        original_add = self.campaign_factions.add
+        attempts = 0
+
+        def fail_on_second_faction(faction, commit=True):
+            nonlocal attempts
+
+            attempts += 1
+
+            if attempts == 2:
+                raise RuntimeError(
+                    "Falha simulada na segunda facção."
+                )
+
+            return original_add(
+                faction,
+                commit=commit
+            )
+
+        with patch.object(
+            self.campaign_factions,
+            "add",
+            side_effect=fail_on_second_faction
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Falha simulada"
+            ):
+                self.snapshot_service.create_initial_snapshot(
+                    self.campaign
+                )
+
+        self.assertEqual(attempts, 2)
+
+        self.assert_snapshot_rolled_back()
+
+        # Após a falha, o snapshot deve poder ser refeito.
+        result = self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        self.assertEqual(len(result["regions"]), 1)
+        self.assertEqual(len(result["locations"]), 1)
+        self.assertEqual(len(result["factions"]), 2)
+
+        self.assertIsNotNone(
+            self.campaign.snapshot_created_at
+        )
+    
+    def test_rollback_when_snapshot_marker_fails(self):
+        self.prepare_world_for_rollback()
+
+        original_marker = (
+            self.campaigns.mark_snapshot_created
+        )
+
+        def fail_after_marker(campaign, commit=True):
+            original_marker(
+                campaign,
+                commit=commit
+            )
+
+            raise RuntimeError(
+                "Falha simulada na finalização."
+            )
+
+        with patch.object(
+            self.campaigns,
+            "mark_snapshot_created",
+            side_effect=fail_after_marker
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Falha simulada"
+            ):
+                self.snapshot_service.create_initial_snapshot(
+                    self.campaign
+                )
+
+        self.assert_snapshot_rolled_back()
+
+        # O serviço deve continuar recuperável.
+        result = self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        self.assertEqual(len(result["regions"]), 1)
+        self.assertEqual(len(result["locations"]), 1)
+        self.assertEqual(len(result["factions"]), 2)
+
+        self.assertIsNotNone(
+            self.campaign.snapshot_created_at
+        )
 
 if __name__ == "__main__":
     unittest.main()
