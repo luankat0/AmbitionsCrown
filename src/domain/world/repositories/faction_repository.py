@@ -21,6 +21,22 @@ class FactionRepository:
             .connection
             .cursor()
         )
+        
+        cursor.execute(
+            """
+            SELECT 1
+            FROM worlds
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (faction.world_id,)
+        )
+        
+        if cursor.fetchone() is None:
+            raise ValueError(
+                "Não é possível criar a facção: "
+                "o mundo informado não existe"
+            )
 
         cursor.execute(
             """
