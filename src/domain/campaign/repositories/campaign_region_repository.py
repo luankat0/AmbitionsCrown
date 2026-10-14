@@ -6,6 +6,10 @@ from src.domain.world.models.region import (
     RegionType,
 )
 
+from src.domain.campaign.repositories.campaign_integrity import (
+    ensure_campaign_exists,
+)
+
 
 class CampaignRegionRepository:
     def __init__(
@@ -19,6 +23,10 @@ class CampaignRegionRepository:
         region,
         commit=True
     ):
+        ensure_campaign_exists(
+            self.database,
+            region.campaign_id
+        )
         cursor = self.database.connection.cursor()
 
         cursor.execute(

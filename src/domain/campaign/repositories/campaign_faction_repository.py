@@ -7,6 +7,10 @@ from src.domain.world.models.faction import (
     FactionType,
 )
 
+from src.domain.campaign.repositories.campaign_integrity import (
+    ensure_campaign_exists,
+)
+
 
 class CampaignFactionRepository:
     def __init__(self, database):
@@ -17,6 +21,10 @@ class CampaignFactionRepository:
         faction,
         commit=True
     ):
+        ensure_campaign_exists(
+            self.database,
+            faction.campaign_id
+        )
         cursor = self.database.connection.cursor()
 
         cursor.execute(
