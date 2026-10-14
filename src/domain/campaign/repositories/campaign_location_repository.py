@@ -14,14 +14,9 @@ class CampaignLocationRepository:
     ):
         self.database = database
 
-    def add(
-        self,
-        location,
-        commit=True
-    ):
-        self._validate_parent(
-            location
-        )
+    def add(self, location, commit=True):
+        self._validate_region_ownership(location)
+        self._validate_parent(location)
 
         cursor = self.database.connection.cursor()
 
@@ -282,6 +277,49 @@ class CampaignLocationRepository:
 
         self.database.connection.commit()
 
+    def _validate_region_ownership(self, location):
+        cursor = self.database.connection.cursor()
+        
+        # Verifica se a campanha existe
+        cursor.execute(
+            """ 
+            SELECT 1
+            FROM campaigns
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (location.campaign_id,)
+        )
+        
+        if cursor.fetchone() is None:
+            raise ValueError(
+                "A campanha informada não existe."
+            )
+            
+        # Verifica se a CampaignRegion existe
+        cursor.execute(
+            """ 
+            SELECT campaign_id
+            FROM campaign_regions
+            WHERE id = ?
+            """,
+            (location.region_id,)
+        )
+        
+        region = cursor.fetchone()
+        
+        if region is None:
+            raise ValueError(
+                "A região da campanha informada não existe."
+            )
+        
+        # Verifica se a Region pertence à Campaign
+        if region["campaign_id"] != location.campaign_id:
+            raise ValueError(
+                "A região deve pertencer "
+                "à mesma campanha do local."
+            )
+    
     def _validate_parent(
         self,
         location
