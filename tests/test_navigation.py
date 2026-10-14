@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch, sentinel
 
 from types import SimpleNamespace
 
+from src.core.app import App
 from src.core.navigation import Navigator
 
 
@@ -380,6 +381,59 @@ class NavigationTests(unittest.TestCase):
             sentinel.canonical_world,
             sentinel.faction
         )
+        
+    def test_change_screen_dispatches_menu_routes(self):
+        routes = {
+            "campaigns": "open_campaigns",
+            "world_library": "open_world_library",
+            "dashboard": "open_dashboard",
+            "world": "open_world",
+            "factions": "open_factions",
+            "npcs": "open_npcs",
+        }
+
+        for screen_name, method_name in routes.items():
+            with self.subTest(screen=screen_name):
+                with patch.object(
+                    self.navigator,
+                    method_name
+                ) as route:
+
+                    self.navigator.change_screen(
+                        screen_name
+                    )
+
+                    route.assert_called_once_with()
+
+
+    def test_change_screen_rejects_unknown_route(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Tela desconhecida: invalid_screen"
+        ):
+            self.navigator.change_screen(
+                "invalid_screen"
+            )
+
+class AppNavigationCompatibilityTests(unittest.TestCase):
+
+    def test_app_change_screen_delegates_to_navigator(self):
+        # Não executa App.__init__().
+        # Portanto, não abre janela nem conexão SQLite.
+        app = App.__new__(App)
+
+        app.navigator = Navigator(app)
+
+        with patch.object(
+            app.navigator,
+            "change_screen"
+        ) as navigate:
+
+            app.change_screen("dashboard")
+
+            navigate.assert_called_once_with(
+                "dashboard"
+            )
 
 if __name__ == "__main__":
     unittest.main()

@@ -17,6 +17,25 @@ from src.screens.world.factions.detail import WorldFactionScreen
 class Navigator:
     def __init__(self, app):
         self.app = app
+        
+    def change_screen(self, screen_name: str) -> None:
+        screens = {
+            "campaigns": self.open_campaigns,
+            "world_library": self.open_world_library,
+            "dashboard": self.open_dashboard,
+            "world": self.open_world,
+            "factions": self.open_factions,
+            "npcs": self.open_npcs,
+        }
+
+        action = screens.get(screen_name)
+
+        if action is None:
+            raise ValueError(
+                f"Tela desconhecida: {screen_name}"
+            )
+
+        action()
 
     def open_campaigns(self):
         self.app.current_screen = CampaignScreen(

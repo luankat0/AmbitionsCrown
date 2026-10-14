@@ -73,40 +73,8 @@ class App:
     def current_campaign(self) -> Campaign | None:
         return self.workspace.current_campaign
 
-    def change_screen(
-        self, 
-        screen_name
-    ):
-        screens = {
-            "campaigns":
-                self.open_campaigns,
-            
-            "world_library":
-                self.open_world_library,
-                
-            "dashboard":
-                self.open_dashboard,
-            
-            "world":
-                self.open_world,
-                
-            "factions":
-                self.open_factions,
-            
-            "npcs":
-                self.open_npcs,
-        }
-        
-        action = screens.get(
-            screen_name
-        )
-        
-        if action is None:
-            raise ValueError(
-                f"Tela desconhecida: {screen_name}"
-            )
-        
-        action()
+    def change_screen(self, screen_name: str):
+        self.navigator.change_screen(screen_name)
         
     def handle_events(self):
         for event in pygame.event.get():
