@@ -28,9 +28,9 @@ from src.domain.campaign.services.campaign_snapshot_service import (
 )
 
 
-from src.screens.dashboard import DashboardScreen
+from src.screens.campaign.dashboard import DashboardScreen
 from src.screens.npcs import NPCScreen
-from src.screens.campaigns import CampaignScreen
+from src.screens.campaign.list import CampaignScreen
 from src.screens.worlds import WorldScreen
 from src.screens.regions import RegionScreen
 from src.screens.locations import LocationScreen
