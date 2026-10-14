@@ -169,36 +169,6 @@ class App:
         self.close_campaign()
         self.open_campaigns()
         
-    def open_region(
-        self,
-        region
-    ):
-        if self.current_campaign is None:
-            return
-        
-        self.current_screen = (
-            RegionScreen(
-                self,
-                region
-            )
-        )
-
-    def open_location(
-        self,
-        region,
-        location
-    ):
-        if self.current_campaign is None:
-            return
-        
-        self.current_screen = (
-            LocationScreen(
-                self,
-                region,
-                location
-            )
-        )
-
     def open_campaigns(self):
         self.navigator.open_campaigns()
         
@@ -207,23 +177,22 @@ class App:
     
     def open_world(self):
         self.navigator.open_world()
-    
-    def open_npcs(self):
-        if self.current_campaign is None:
-            return
         
-        self.current_screen = (
-            NPCScreen(self)
+    def open_region(self, region):
+        self.navigator.open_region(region)
+
+    def open_location(self, region, location):
+        self.navigator.open_location(
+            region,
+            location
         )
 
     def open_factions(self):
-        if self.current_campaign is None:
-            return
-        
-        self.current_screen = FactionScreen(
-            self
-        )
+        self.navigator.open_factions()
 
+    def open_npcs(self):
+        self.navigator.open_npcs()
+        
     def open_world_library(self):
         self.close_campaign()
         
