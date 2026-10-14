@@ -168,6 +168,22 @@ class CampaignRegionRepository:
             )
 
         cursor = self.database.connection.cursor()
+        
+        cursor.execute(
+            """ 
+            SELECT 1
+            FROM campaign_locations
+            WHERE region_id = ?
+            LIMIT 1
+            """,
+            (region.id,)
+        )
+        
+        if cursor.fetchone() is not None:
+            raise ValueError(
+                "Não é possível excluir esta região de campanha "
+                "porque ela possui locais."
+            )
 
         cursor.execute(
             """
