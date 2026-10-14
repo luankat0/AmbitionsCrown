@@ -78,11 +78,11 @@ class CampaignSnapshotService:
             )
         )
         
-        existing_source_ids = (
+        existing_source_ids = {
             faction.source_faction_id
             for faction in campaign_factions
             if faction.source_faction_id is not None
-        )
+        }
         
         created_factions = []
         
