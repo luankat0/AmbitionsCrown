@@ -1,6 +1,7 @@
 import unittest
+from unittest.mock import Mock, patch, sentinel
+
 from types import SimpleNamespace
-from unittest.mock import patch, sentinel
 
 from src.core.navigation import Navigator
 
@@ -115,7 +116,6 @@ class NavigationTests(unittest.TestCase):
                 sentinel.previous_screen
             )
 
-
     def test_open_region_and_location_with_campaign(self):
         self.app.current_campaign = SimpleNamespace(
             id=1,
@@ -156,7 +156,6 @@ class NavigationTests(unittest.TestCase):
                 location_screen.return_value
             )
 
-
     def test_factions_and_npcs_require_campaign(self):
         with (
             patch("src.core.navigation.FactionScreen") as faction_screen,
@@ -172,7 +171,6 @@ class NavigationTests(unittest.TestCase):
                 self.app.current_screen,
                 sentinel.previous_screen
             )
-
 
     def test_open_factions_and_npcs_with_campaign(self):
         self.app.current_campaign = SimpleNamespace(
@@ -206,6 +204,88 @@ class NavigationTests(unittest.TestCase):
             self.assertIs(
                 self.app.current_screen,
                 npc_screen.return_value
+            )
+
+    def test_world_library_closes_campaign_before_opening(self):
+        self.app.current_campaign = SimpleNamespace(
+            id=1,
+            world_id=2
+        )
+
+        close_campaign = Mock(
+            side_effect=lambda: setattr(
+                self.app,
+                "current_campaign",
+                None
+            )
+        )
+
+        self.app.close_campaign = close_campaign
+
+        def create_screen(app):
+            self.assertIsNone(app.current_campaign)
+            return sentinel.world_library_screen
+
+        with patch(
+            "src.core.navigation.WorldLibraryScreen",
+            side_effect=create_screen
+        ) as screen_class:
+
+            self.navigator.open_world_library()
+
+            close_campaign.assert_called_once_with()
+            screen_class.assert_called_once_with(self.app)
+
+            self.assertIs(
+                self.app.current_screen,
+                sentinel.world_library_screen
+            )
+
+    def test_world_manager_closes_campaign_before_opening(self):
+        self.app.current_campaign = SimpleNamespace(
+            id=1,
+            world_id=2
+        )
+
+        close_campaign = Mock(
+            side_effect=lambda: setattr(
+                self.app,
+                "current_campaign",
+                None
+            )
+        )
+
+        self.app.close_campaign = close_campaign
+
+        def create_screen(app, world):
+            self.assertIsNone(app.current_campaign)
+
+            self.assertIs(
+                world,
+                sentinel.canonical_world
+            )
+
+            return sentinel.world_manager_screen
+
+        with patch(
+            "src.core.navigation.WorldManagerScreen",
+            side_effect=create_screen
+        ) as screen_class:
+
+            self.navigator.open_world_manager(
+                sentinel.canonical_world
+            )
+
+            close_campaign.assert_called_once_with()
+
+            screen_class.assert_called_once_with(
+                self.app,
+                sentinel.canonical_world
+            )
+
+            self.assertIs(
+                self.app.current_screen,
+                sentinel.world_manager_screen
             )
 
 if __name__ == "__main__":

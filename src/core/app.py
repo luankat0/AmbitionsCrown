@@ -2,42 +2,20 @@ import pygame
 
 from src.core.database import Database
 from src.core.navigation import Navigator
-
-from src.domain.campaign.models.campaign import Campaign
-
 from src.core.bootstrap import build_dependencies
 
+from src.domain.campaign.models.campaign import Campaign
 
 from src.domain.campaign.services.campaign_snapshot_service import (
     CampaignSnapshotService,
 )
 
-
-from src.screens.campaign.npcs.list import NPCScreen
 from src.screens.campaign.list import CampaignScreen
-from src.screens.campaign.regions.detail import RegionScreen
-from src.screens.campaign.locations.detail import LocationScreen
-from src.screens.campaign.factions.list import FactionScreen
 
-from src.screens.world.library import (
-    WorldLibraryScreen,
-)
-from src.screens.world.overview import (
-    WorldManagerScreen,
-)
-from src.screens.world.regions.detail import (
-    WorldRegionScreen
-)
-from src.screens.world.locations.detail import (
-    WorldLocationScreen,
-)
-
-from src.screens.world.factions.list import (
-    WorldFactionsScreen,
-)
-from src.screens.world.factions.detail import (
-    WorldFactionScreen,
-)
+from src.screens.world.regions.detail import WorldRegionScreen
+from src.screens.world.locations.detail import WorldLocationScreen
+from src.screens.world.factions.list import WorldFactionsScreen
+from src.screens.world.factions.detail import WorldFactionScreen
 
 class App:
     def __init__(self):
@@ -194,26 +172,10 @@ class App:
         self.navigator.open_npcs()
         
     def open_world_library(self):
-        self.close_campaign()
+        self.navigator.open_world_library()
         
-        self.current_screen = (
-            WorldLibraryScreen(
-                self
-            )
-        )
-        
-    def open_world_manager(
-        self,
-        world
-    ):
-        self.close_campaign()
-        
-        self.current_screen = (
-            WorldManagerScreen(
-                self,
-                world
-            )
-        )
+    def open_world_manager(self, world):
+        self.navigator.open_world_manager(world)
     
     def open_world_region(
         self,

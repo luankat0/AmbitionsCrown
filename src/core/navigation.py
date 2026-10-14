@@ -6,6 +6,9 @@ from src.screens.campaign.locations.detail import LocationScreen
 from src.screens.campaign.factions.list import FactionScreen
 from src.screens.campaign.npcs.list import NPCScreen
 
+from src.screens.world.library import WorldLibraryScreen
+from src.screens.world.overview import WorldManagerScreen
+
 
 class Navigator:
     def __init__(self, app):
@@ -66,3 +69,19 @@ class Navigator:
         self.app.current_screen = NPCScreen(
             self.app
         )
+
+    def open_world_library(self):
+        self.app.close_campaign()
+
+        self.app.current_screen = WorldLibraryScreen(
+            self.app
+        )
+
+    def open_world_manager(self, world):
+        self.app.close_campaign()
+
+        self.app.current_screen = WorldManagerScreen(
+            self.app,
+            world
+        )
+
