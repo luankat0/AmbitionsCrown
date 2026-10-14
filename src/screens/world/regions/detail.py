@@ -4,6 +4,7 @@ from enum import Enum, auto
 
 from src.ui.button import Button
 from src.ui.scroll import clamp_scroll
+from src.ui.location_card import draw_location_card
 
 from src.ui.dialogs.confirm_dialog import ConfirmDialog
 from src.ui.dialogs.message_dialog import MessageDialog
@@ -384,48 +385,13 @@ class WorldRegionScreen:
                 (location, rect)
             )
             
-            pygame.draw.rect(
+            draw_location_card(
                 screen,
-                (45, 45, 55),
                 rect,
-                border_radius=8
-            )
-            
-            name_surface = (
-                self.name_font.render(
-                    location.name,
-                    True,
-                    (235, 235, 240)
-                )
-            )
-            
-            screen.blit(
-                name_surface,
-                (
-                    rect.x + 20,
-                    rect.y + 10
-                )
-            )
-            
-            description = (
-                location.description
-                or "Sem descrição."
-            )
-            
-            description_surface = (
-                self.info_font.render(
-                    description,
-                    True,
-                    (155, 155, 165)
-                )
-            )
-            
-            screen.blit(
-                description_surface,
-                (
-                    rect.x + 20,
-                    rect.y + 45
-                )
+                location.name,
+                location.description,
+                self.name_font,
+                self.info_font
             )
             
             y += 90
