@@ -15,6 +15,8 @@ from src.domain.world.repositories.faction_repository import FactionRepository
 
 from src.domain.campaign.models.campaign import Campaign
 from src.domain.campaign.models.campaign_faction import CampaignFaction
+from src.domain.campaign.models.campaign_location import CampaignLocation
+from src.domain.campaign.models.campaign_region import CampaignRegion
 
 from src.domain.campaign.repositories.campaign_repository import CampaignRepository
 from src.domain.campaign.repositories.campaign_region_repository import CampaignRegionRepository
@@ -76,6 +78,52 @@ class CampaignSnapshotTests(unittest.TestCase):
         assert faction.id is not None
         return faction
     
+    def create_world_hierarchy(self):
+        region = self.regions.add(
+            Region(
+                world_id=self.world_id,
+                name="Reino"
+            )
+        )
+
+        assert region.id is not None
+
+        city = self.locations.add(
+            Location(
+                region_id=region.id,
+                name="Cidade"
+            )
+        )
+
+        assert city.id is not None
+
+        castle = self.locations.add(
+            Location(
+                region_id=region.id,
+                parent_location_id=city.id,
+                name="Castelo"
+            )
+        )
+
+        assert castle.id is not None
+
+        tower = self.locations.add(
+            Location(
+                region_id=region.id,
+                parent_location_id=castle.id,
+                name="Torre"
+            )
+        )
+
+        assert tower.id is not None
+
+        return (
+            region.id,
+            city.id,
+            castle.id,
+            tower.id
+        )
+    
     def prepare_world_for_rollback(self):
         region = self.regions.add(
             Region(
@@ -95,7 +143,6 @@ class CampaignSnapshotTests(unittest.TestCase):
 
         self.create_faction("Alfa")
         self.create_faction("Zeta")
-
 
     def assert_snapshot_rolled_back(self):
         self.assertEqual(
@@ -313,6 +360,233 @@ class CampaignSnapshotTests(unittest.TestCase):
 
         self.assertIsNotNone(
             self.campaign.snapshot_created_at
+        )
+
+    def test_snapshot_preserves_location_hierarchy(self):
+        (
+            region_id,
+            city_id,
+            castle_id,
+            tower_id
+        ) = self.create_world_hierarchy()
+
+        # Cria conteúdo próprio antes do snapshot.
+        # Isso também diferencia os IDs das duas tabelas.
+        own_region = self.campaign_regions.add(
+            CampaignRegion(
+                campaign_id=self.campaign_id,
+                name="Região própria"
+            )
+        )
+
+        assert own_region.id is not None
+
+        own_location = self.campaign_locations.add(
+            CampaignLocation(
+                campaign_id=self.campaign_id,
+                region_id=own_region.id,
+                name="Local próprio"
+            )
+        )
+
+        assert own_location.id is not None
+
+        result = self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        self.assertEqual(len(result["regions"]), 1)
+        self.assertEqual(len(result["locations"]), 3)
+
+        regions = self.campaign_regions.get_all_by_campaign(
+            self.campaign_id
+        )
+
+        copied_region = next(
+            region
+            for region in regions
+            if region.source_region_id == region_id
+        )
+
+        assert copied_region.id is not None
+
+        # IDs próprios da Campaign.
+        self.assertNotEqual(
+            copied_region.id,
+            region_id
+        )
+
+        locations = self.campaign_locations.get_all_by_campaign(
+            self.campaign_id
+        )
+
+        copied = {
+            location.source_location_id: location
+            for location in locations
+            if location.source_location_id is not None
+        }
+
+        self.assertEqual(
+            set(copied),
+            {city_id, castle_id, tower_id}
+        )
+
+        # Cidade é a raiz.
+        self.assertIsNone(
+            copied[city_id].parent_location_id
+        )
+
+        # Castelo pertence à Cidade copiada.
+        self.assertEqual(
+            copied[castle_id].parent_location_id,
+            copied[city_id].id
+        )
+
+        # Torre pertence ao Castelo copiado.
+        self.assertEqual(
+            copied[tower_id].parent_location_id,
+            copied[castle_id].id
+        )
+
+        # Todos pertencem à Region copiada.
+        for location in copied.values():
+            self.assertEqual(
+                location.region_id,
+                copied_region.id
+            )
+
+        # O local criado pela Campaign foi preservado.
+        self.assertIn(
+            own_location.id,
+            {location.id for location in locations}
+        )
+
+    def test_campaign_snapshots_are_independent(self):
+        (
+            region_id,
+            _,
+            _,
+            tower_id
+        ) = self.create_world_hierarchy()
+
+        campaign_b = self.campaigns.add(
+            Campaign(
+                name="Campanha B",
+                world_id=self.world_id
+            )
+        )
+
+        assert campaign_b.id is not None
+
+        self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        self.snapshot_service.create_initial_snapshot(
+            campaign_b
+        )
+
+        # Recupera as cópias de cada Campaign.
+        region_a = next(
+            region
+            for region in self.campaign_regions.get_all_by_campaign(
+                self.campaign_id
+            )
+            if region.source_region_id == region_id
+        )
+
+        region_b = next(
+            region
+            for region in self.campaign_regions.get_all_by_campaign(
+                campaign_b.id
+            )
+            if region.source_region_id == region_id
+        )
+
+        tower_a = next(
+            location
+            for location in self.campaign_locations.get_all_by_campaign(
+                self.campaign_id
+            )
+            if location.source_location_id == tower_id
+        )
+
+        tower_b = next(
+            location
+            for location in self.campaign_locations.get_all_by_campaign(
+                campaign_b.id
+            )
+            if location.source_location_id == tower_id
+        )
+
+        assert region_a.id is not None
+        assert region_b.id is not None
+        assert tower_a.id is not None
+        assert tower_b.id is not None
+
+        # As cópias possuem identidades independentes.
+        self.assertNotEqual(region_a.id, region_b.id)
+        self.assertNotEqual(tower_a.id, tower_b.id)
+
+        # Modifica somente a Campaign A.
+        region_a.name = "Reino destruído"
+        tower_a.name = "Torre abandonada"
+
+        self.campaign_regions.update(region_a)
+        self.campaign_locations.update(tower_a)
+
+        # Modifica também o World original.
+        world_region = self.regions.get_by_id(region_id)
+        world_tower = self.locations.get_by_id(tower_id)
+
+        assert world_region is not None
+        assert world_tower is not None
+
+        world_region.name = "Reino renovado"
+        world_tower.name = "Torre restaurada"
+
+        self.regions.update(world_region)
+        self.locations.update(world_tower)
+
+        # Reconsulta o banco para verificar persistência.
+        saved_region_a = self.campaign_regions.get_by_id(
+            region_a.id
+        )
+        saved_region_b = self.campaign_regions.get_by_id(
+            region_b.id
+        )
+
+        saved_tower_a = self.campaign_locations.get_by_id(
+            tower_a.id
+        )
+        saved_tower_b = self.campaign_locations.get_by_id(
+            tower_b.id
+        )
+
+        assert saved_region_a is not None
+        assert saved_region_b is not None
+        assert saved_tower_a is not None
+        assert saved_tower_b is not None
+
+        self.assertEqual(
+            saved_region_a.name,
+            "Reino destruído"
+        )
+        self.assertEqual(
+            saved_tower_a.name,
+            "Torre abandonada"
+        )
+
+        self.assertEqual(saved_region_b.name, "Reino")
+        self.assertEqual(saved_tower_b.name, "Torre")
+
+        self.assertEqual(
+            self.regions.get_by_id(region_id).name,
+            "Reino renovado"
+        )
+        self.assertEqual(
+            self.locations.get_by_id(tower_id).name,
+            "Torre restaurada"
         )
 
 if __name__ == "__main__":
