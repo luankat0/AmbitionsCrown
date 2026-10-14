@@ -8,6 +8,22 @@ class RegionRepository:
         cursor = self.database.connection.cursor()
         
         cursor.execute(
+            """ 
+            SELECT 1
+            FROM worlds
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (region.world_id,)
+        )
+        
+        if cursor.fetchone() is None:
+            raise ValueError(
+                "Não é possível criar a região: "
+                "o mundo informado não existe."
+            )
+        
+        cursor.execute(
             """
             INSERT INTO regions (
                 world_id,
@@ -216,3 +232,4 @@ class RegionRepository:
         )
 
         self.database.connection.commit()
+

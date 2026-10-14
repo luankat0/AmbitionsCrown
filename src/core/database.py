@@ -7,14 +7,18 @@ DATA_DIR = PROJECT_ROOT / "data"
 DATABASE_PATH = DATA_DIR / "ambitions_crown.db"
 
 class Database:
-    def __init__(self):
-        DATA_DIR.mkdir(
-            parents=True,
-            exist_ok=True
-        )
+    def __init__(
+        self,
+        database_path: str | Path = DATABASE_PATH
+    ):
+        if database_path != ":memory:":
+            Path(database_path).parent.mkdir(
+                parents=True,
+                exist_ok=True
+            )
         
         self.connection = sqlite3.connect(
-            DATABASE_PATH
+            database_path
         )
         
         self.connection.row_factory = sqlite3.Row
