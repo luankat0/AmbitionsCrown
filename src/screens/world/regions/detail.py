@@ -3,6 +3,7 @@ import pygame
 from enum import Enum, auto
 
 from src.ui.button import Button
+from src.ui.scroll import clamp_scroll
 
 from src.ui.dialogs.confirm_dialog import ConfirmDialog
 from src.ui.dialogs.message_dialog import MessageDialog
@@ -439,17 +440,10 @@ class WorldRegionScreen:
             len(self.locations) * 90 - 5
         )
         
-        max_scroll = max(
-            0,
-            content_height - self.list_rect.height
-        )
-        
-        self.scroll_offset = max(
-            0,
-            min(
-                self.scroll_offset,
-                max_scroll
-            )
+        self.scroll_offset = clamp_scroll(
+            self.scroll_offset,
+            content_height,
+            self.list_rect.height
         )
         
     def handle_location_form_events(self, event):
