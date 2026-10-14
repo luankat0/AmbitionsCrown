@@ -42,10 +42,10 @@ from src.screens.world.library import (
 from src.screens.world.overview import (
     WorldManagerScreen,
 )
-from src.screens.world_region import (
+from src.screens.world.regions.detail import (
     WorldRegionScreen
 )
-from src.screens.world_location import (
+from src.screens.world.locations.detail import (
     WorldLocationScreen,
 )
 
