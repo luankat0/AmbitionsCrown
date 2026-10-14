@@ -92,16 +92,18 @@ class App:
         pygame.display.flip()
 
     def run(self):
-        while self.running:
-            self.handle_events()
-            self.update()
-            self.render()
+        try:    
+            while self.running:
+                self.handle_events()
+                self.update()
+                self.render()
 
-            self.clock.tick(60)
-
-        self.database.close()
-        
-        pygame.quit()
+                self.clock.tick(60)
+        finally:
+            try:
+                self.database.close()
+            finally:
+                pygame.quit()
         
     def select_campaign(self, campaign: Campaign):
         self.workspace.select_campaign(campaign)
@@ -126,10 +128,7 @@ class App:
         self.navigator.open_region(region)
 
     def open_location(self, region, location):
-        self.navigator.open_location(
-            region,
-            location
-        )
+        self.navigator.open_location(region, location)
 
     def open_factions(self):
         self.navigator.open_factions()
