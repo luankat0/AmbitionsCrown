@@ -210,6 +210,9 @@ class LocationForm(BaseForm):
         region_id,
         parent_location_id=None
     ):
+        if not self.validate():
+            return None
+        
         return CampaignLocation(
             campaign_id=campaign_id,
             region_id=region_id,

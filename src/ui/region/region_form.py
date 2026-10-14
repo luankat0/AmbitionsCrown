@@ -350,6 +350,9 @@ class RegionForm(BaseForm):
         self,
         campaign_id
     ):
+        if not self.validate():
+            return None
+        
         return CampaignRegion(
             campaign_id=campaign_id,
             name=self.name_input.text.strip(),
