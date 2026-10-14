@@ -195,6 +195,13 @@ class FactionRepository:
                 faction.id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "Não é possível atualizar: "
+                "a facção informada não existe."
+            )
+
 
         self.database.connection.commit()
 
@@ -224,6 +231,12 @@ class FactionRepository:
                 faction.id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "Não é possível excluir: "
+                "a facção informada não existe."
+            )
         
         self.database.connection.commit()
 

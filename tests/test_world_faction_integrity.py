@@ -143,6 +143,36 @@ class WorldFactionIntegrityTests(unittest.TestCase):
             self.worlds.get_by_id(self.world_id)
         )
 
+    def test_reject_update_of_nonexistent_faction(self):
+        faction = Faction(
+            world_id=self.world_id,
+            name="Facção inexistente",
+            id=999_999
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "não existe"
+        ):
+            self.factions.update(faction)
+
+        self.assertIsNone(
+            self.factions.get_by_id(faction.id)
+        )
+
+    def test_reject_delete_of_nonexistent_faction(self):
+        faction = Faction(
+            world_id=self.world_id,
+            name="Facção inexistente",
+            id=999_999
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "não existe"
+        ):
+            self.factions.delete(faction)
+
 if __name__ == "__main__":
     unittest.main()
         
