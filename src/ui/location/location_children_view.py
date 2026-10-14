@@ -1,5 +1,7 @@
 import pygame
 
+from src.ui.location_row import draw_location_row
+
 from src.ui.location.location_labels import (
     get_location_type_label
 )
@@ -91,40 +93,14 @@ class LocationChildrenView:
             )
         )
         
-        name_surface = (
-            self.info_font.render(
-                location.name,
-                True,
-                (220, 220, 230)
-            )
-        )
-
-        screen.blit(
-            name_surface,
-            (
-                x,
-                y
-            )
-        )
-
-        type_text = (
-            get_location_type_label(
+        draw_location_row(
+            screen=screen,
+            font=self.info_font,
+            name=location.name,
+            location_type_label=get_location_type_label(
                 location.location_type
-            )
-        )
-
-        type_surface = (
-            self.info_font.render(
-                type_text,
-                True,
-                (145, 145, 160)
-            )
-        )
-
-        screen.blit(
-            type_surface,
-            (
-                x + 280,
-                y
-            )
+            ),
+            x=x,
+            y=y,
+            type_offset=280
         )

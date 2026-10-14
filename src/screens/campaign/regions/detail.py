@@ -247,20 +247,14 @@ class RegionScreen(BaseScreen):
         if self.region.id is None:
             self.locations = []
             return
-
-        locations = (
+        
+        self.locations = (
             self.app
             .campaign_location_repository
             .get_all_by_region(
                 self.region.id
             )
         )
-        
-        self.locations = [
-            location
-            for location in locations
-            if location.parent_location_id is None
-        ]
 
     def return_to_world(self):
         self.app.open_world()

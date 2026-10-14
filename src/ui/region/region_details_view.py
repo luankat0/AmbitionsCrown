@@ -1,6 +1,7 @@
 import pygame
 
 from src.ui.button import Button
+from src.ui.scroll import clamp_scroll
 
 from src.ui.region.region_labels import (
     get_region_type_label
@@ -57,6 +58,14 @@ class RegionDetailsView:
             LocationTreeView()
         )
         
+        self.locations_viewport = pygame.Rect(
+            300, 570, 650, 130
+        )
+
+        self.scroll_offset = 0
+        self.scroll_speed = 38
+        self.content_height = 0
+        
     def handle_event(
         self,
         event
@@ -80,6 +89,27 @@ class RegionDetailsView:
             event
         ):
             return "new_location", None
+        
+        if event.type == pygame.MOUSEWHEEL:
+            if self.locations_viewport.collidepoint(
+                pygame.mouse.get_pos()
+            ):
+                self.scroll_offset = clamp_scroll(
+                    self.scroll_offset - event.y * self.scroll_speed,
+                    self.content_height,
+                    self.locations_viewport.height
+                )
+                
+            return None, None
+        
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+        ):
+            if not self.locations_viewport.collidepoint(
+                event.pos
+            ):
+                return None, None
         
         location = (
             self.location_tree_view
@@ -254,9 +284,27 @@ class RegionDetailsView:
             (300, 520)
         )
         
-        self.location_tree_view.render(
-            screen,
-            locations,
-            start_x=300,
-            start_y=575
+        self.content_height = (
+            len(locations)
+            * self.location_tree_view.row_height
         )
+        
+        self.scroll_offset = clamp_scroll(
+            self.scroll_offset,
+            self.content_height,
+            self.locations_viewport.height
+        )
+        
+        previous_clip = screen.get_clip()
+        
+        screen.set_clip(self.locations_viewport)
+        
+        try:
+            self.location_tree_view.render(
+                screen,
+                locations,
+                start_x=300,
+                start_y=575 - self.scroll_offset
+            )
+        finally:
+            screen.set_clip(previous_clip)
