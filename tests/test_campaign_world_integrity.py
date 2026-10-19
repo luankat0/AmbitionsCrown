@@ -177,6 +177,60 @@ class CampaignWorldIntegrityTests(unittest.TestCase):
             original_snapshot
         )
 
+    def test_reject_creation_with_nonexistent_world(self):
+        invalid_campaign = Campaign(
+            name="Campanha inválida",
+            world_id=999_999
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "mundo"
+        ):
+            self.campaigns.add(invalid_campaign)
+
+        # A Campaign inválida não deve ser persistida.
+        row = self.database.connection.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM campaigns
+            WHERE name = ?
+            """,
+            ("Campanha inválida",)
+        ).fetchone()
+
+        assert row is not None
+
+        self.assertEqual(
+            row["total"],
+            0
+        )
+
+    def test_reject_update_with_nonexistent_world(self):
+        # A Campaign ainda não possui World nem snapshot.
+        self.assertIsNone(
+            self.stored_campaign()["world_id"]
+        )
+
+        # Tenta associá-la a um World inexistente.
+        self.campaign.world_id = 999_999
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "mundo"
+        ):
+            self.campaigns.update(self.campaign)
+
+        # O banco deve preservar o estado anterior.
+        saved = self.stored_campaign()
+
+        self.assertIsNone(
+            saved["world_id"]
+        )
+
+        self.assertIsNone(
+            saved["snapshot_created_at"]
+        )
 
 if __name__ == "__main__":
     unittest.main()

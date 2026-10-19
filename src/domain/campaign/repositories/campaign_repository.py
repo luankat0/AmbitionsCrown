@@ -4,7 +4,23 @@ class CampaignRepository:
     def __init__(self, database):
         self.database = database
         
-    def add(self, campaign):
+    def add(self, campaign):        
+        if campaign.world_id is not None:
+            existing_world = self.database.connection.execute(
+                """ 
+                SELECT 1
+                FROM worlds
+                WHERE id = ?
+                LIMIT 1
+                """,
+                (campaign.world_id,)
+            ).fetchone()
+            
+            if existing_world is None:
+                raise ValueError(
+                    "O mundo informado não existe."
+                )
+        
         cursor = self.database.connection.cursor()
         
         cursor.execute(
@@ -126,6 +142,23 @@ class CampaignRepository:
                 "Não é possível alterar o mundo de uma campanha "
                 "após a criação do snapshot."
             )
+        
+        # O World informado precisa existir.
+        if campaign.world_id is not None:
+            cursor.execute(
+                """ 
+                SELECT 1
+                FROM worlds
+                WHERE id = ?
+                LIMIT 1
+                """,
+                (campaign.world_id,)
+            )
+            
+            if cursor.fetchone() is None:
+                raise ValueError(
+                    "O mundo informado não existe."
+                )
         
         cursor.execute(
             """
