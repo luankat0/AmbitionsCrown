@@ -228,7 +228,7 @@ class CampaignLocationRepository:
                 description = ?,
                 notes = ?,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = ? AND campaign_id = ?
             """,
             (
                 location.name,
@@ -236,9 +236,16 @@ class CampaignLocationRepository:
                 location.description,
                 location.notes,
                 location.id,
+                location.campaign_id,
             )
         )
 
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "O local não existe ou não pertence "
+                "à campanha informada."
+            )
+        
         self.database.connection.commit()
 
         return location
@@ -268,12 +275,19 @@ class CampaignLocationRepository:
         cursor.execute(
             """
             DELETE FROM campaign_locations
-            WHERE id = ?
+            WHERE id = ? AND campaign_id = ?
             """,
             (
                 location.id,
+                location.campaign_id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "O local não existe ou não pertence "
+                "à campanha informada."
+            )
 
         self.database.connection.commit()
 

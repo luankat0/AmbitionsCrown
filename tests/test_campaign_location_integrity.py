@@ -165,6 +165,110 @@ class CampaignLocationIntegrityTests(unittest.TestCase):
                 )
             )
 
+    def test_reject_update_from_other_campaign(self):
+        other_campaign_id, other_region_id = (
+            self.create_other_campaign_region()
+        )
+
+        location_b = self.locations.add(
+            CampaignLocation(
+                campaign_id=other_campaign_id,
+                region_id=other_region_id,
+                name="Cidade B"
+            )
+        )
+
+        assert location_b.id is not None
+
+        # O objeto declara pertencer à Campaign A,
+        # mas usa o ID de uma Location da Campaign B.
+        forged_location = CampaignLocation(
+            id=location_b.id,
+            campaign_id=self.campaign_id,
+            region_id=self.region_id,
+            name="Alteração indevida"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "campanha"
+        ):
+            self.locations.update(forged_location)
+
+        # A Location original deve permanecer intacta.
+        saved = self.locations.get_by_id(
+            location_b.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Cidade B"
+        )
+
+        self.assertEqual(
+            saved.campaign_id,
+            other_campaign_id
+        )
+
+        self.assertEqual(
+            saved.region_id,
+            other_region_id
+        )
+
+    def test_reject_delete_from_other_campaign(self):
+        other_campaign_id, other_region_id = (
+            self.create_other_campaign_region()
+        )
+
+        location_b = self.locations.add(
+            CampaignLocation(
+                campaign_id=other_campaign_id,
+                region_id=other_region_id,
+                name="Cidade B"
+            )
+        )
+
+        assert location_b.id is not None
+
+        # Declara pertencer à Campaign A,
+        # mas utiliza o ID da Location da Campaign B.
+        forged_location = CampaignLocation(
+            id=location_b.id,
+            campaign_id=self.campaign_id,
+            region_id=self.region_id,
+            name="Cidade B"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "campanha"
+        ):
+            self.locations.delete(forged_location)
+
+        # A Location da Campaign B deve permanecer intacta.
+        saved = self.locations.get_by_id(
+            location_b.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Cidade B"
+        )
+
+        self.assertEqual(
+            saved.campaign_id,
+            other_campaign_id
+        )
+
+        self.assertEqual(
+            saved.region_id,
+            other_region_id
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

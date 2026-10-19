@@ -165,6 +165,99 @@ class CampaignEntityOwnershipTests(unittest.TestCase):
             self.factions.get_by_id(faction.id)
         )
 
+    def test_reject_faction_update_from_other_campaign(self):
+        campaign_b = self.campaigns.add(
+            Campaign(name="Campanha B")
+        )
+
+        assert campaign_b.id is not None
+
+        faction_b = self.factions.add(
+            CampaignFaction(
+                campaign_id=campaign_b.id,
+                name="Ordem da Campanha B"
+            )
+        )
+
+        assert faction_b.id is not None
+
+        # O objeto declara pertencer à Campaign A,
+        # mas utiliza o ID da Facção da Campaign B.
+        forged_faction = CampaignFaction(
+            id=faction_b.id,
+            campaign_id=self.campaign_id,
+            name="Alteração indevida"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "campanha"
+        ):
+            self.factions.update(forged_faction)
+
+        # A Facção original não deve ser modificada.
+        saved = self.factions.get_by_id(
+            faction_b.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Ordem da Campanha B"
+        )
+
+        self.assertEqual(
+            saved.campaign_id,
+            campaign_b.id
+        )
+
+    def test_reject_faction_delete_from_other_campaign(self):
+        campaign_b = self.campaigns.add(
+            Campaign(name="Campanha B")
+        )
+
+        assert campaign_b.id is not None
+
+        faction_b = self.factions.add(
+            CampaignFaction(
+                campaign_id=campaign_b.id,
+                name="Ordem da Campanha B"
+            )
+        )
+
+        assert faction_b.id is not None
+
+        # Declara pertencer à Campaign A,
+        # mas utiliza o ID de uma Facção da Campaign B.
+        forged_faction = CampaignFaction(
+            id=faction_b.id,
+            campaign_id=self.campaign_id,
+            name="Ordem da Campanha B"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "campanha"
+        ):
+            self.factions.delete(forged_faction)
+
+        # A Facção original deve continuar existindo.
+        saved = self.factions.get_by_id(
+            faction_b.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Ordem da Campanha B"
+        )
+
+        self.assertEqual(
+            saved.campaign_id,
+            campaign_b.id
+        )
 
 if __name__ == "__main__":
     unittest.main()

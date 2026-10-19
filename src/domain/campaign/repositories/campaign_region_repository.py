@@ -150,7 +150,7 @@ class CampaignRegionRepository:
                 description = ?,
                 notes = ?,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = ? AND campaign_id = ?
             """,
             (
                 region.name,
@@ -158,8 +158,15 @@ class CampaignRegionRepository:
                 region.description,
                 region.notes,
                 region.id,
+                region.campaign_id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "A região não existe ou não pertence "
+                "à campanha informada."
+            )
 
         self.database.connection.commit()
 
@@ -196,12 +203,19 @@ class CampaignRegionRepository:
         cursor.execute(
             """
             DELETE FROM campaign_regions
-            WHERE id = ?
+            WHERE id = ? AND campaign_id = ?
             """,
             (
                 region.id,
+                region.campaign_id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "A região não existe ou não pertence "
+                "à campanha informada."
+            )
 
         self.database.connection.commit()
 

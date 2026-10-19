@@ -151,10 +151,7 @@ class CampaignFactionRepository:
             updated_at=row["updated_at"],
         )
 
-    def update(
-        self,
-        faction
-    ):
+    def update(self, faction):
         if faction.id is None:
             raise ValueError(
                 "Não é possível atualizar uma facção "
@@ -173,7 +170,7 @@ class CampaignFactionRepository:
                 description = ?,
                 notes = ?,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = ? AND campaign_id = ?
             """,
             (
                 faction.name,
@@ -182,8 +179,15 @@ class CampaignFactionRepository:
                 faction.description,
                 faction.notes,
                 faction.id,
+                faction.campaign_id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "A facção não existe ou não pertence "
+                "à campanha informada."
+            )
 
         self.database.connection.commit()
 
@@ -204,12 +208,19 @@ class CampaignFactionRepository:
         cursor.execute(
             """
             DELETE FROM campaign_factions
-            WHERE id = ?
+            WHERE id = ? AND campaign_id = ?
             """,
             (
                 faction.id,
+                faction.campaign_id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "A facção não existe ou não pertence "
+                "à campanha informada."
+            )
 
         self.database.connection.commit()
 

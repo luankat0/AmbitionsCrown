@@ -123,6 +123,94 @@ class CampaignRegionIntegrityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "sem ID"):
             self.regions.delete(region)
 
+    def test_reject_update_from_other_campaign(self):
+        other_campaign = self.campaigns.add(
+            Campaign(name="Campanha B")
+        )
+
+        assert other_campaign.id is not None
+
+        region_b = self.regions.add(
+            CampaignRegion(
+                campaign_id=other_campaign.id,
+                name="Região B"
+            )
+        )
+
+        assert region_b.id is not None
+
+        # Objeto informa a Campaign A,
+        # mas utiliza o ID de uma Region da Campaign B.
+        forged_region = CampaignRegion(
+            id=region_b.id,
+            campaign_id=self.campaign_id,
+            name="Alteração indevida"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "campanha"
+        ):
+            self.regions.update(forged_region)
+
+        saved = self.regions.get_by_id(region_b.id)
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Região B"
+        )
+
+        self.assertEqual(
+            saved.campaign_id,
+            other_campaign.id
+        )
+        
+    def test_reject_delete_from_other_campaign(self):
+        other_campaign = self.campaigns.add(
+            Campaign(name="Campanha B")
+        )
+
+        assert other_campaign.id is not None
+
+        region_b = self.regions.add(
+            CampaignRegion(
+                campaign_id=other_campaign.id,
+                name="Região B"
+            )
+        )
+
+        assert region_b.id is not None
+
+        # O objeto declara pertencer à Campaign A,
+        # mas utiliza o ID de uma Region da Campaign B.
+        forged_region = CampaignRegion(
+            id=region_b.id,
+            campaign_id=self.campaign_id,
+            name="Região B"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "campanha"
+        ):
+            self.regions.delete(forged_region)
+
+        # A Region da Campaign B deve continuar existindo.
+        saved = self.regions.get_by_id(region_b.id)
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.campaign_id,
+            other_campaign.id
+        )
+
+        self.assertEqual(
+            saved.name,
+            "Região B"
+        )
 
 if __name__ == "__main__":
     unittest.main()
