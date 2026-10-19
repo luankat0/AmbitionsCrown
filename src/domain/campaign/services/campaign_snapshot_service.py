@@ -377,6 +377,32 @@ class CampaignSnapshotService:
         )
         
         try:
+            persisted = connection.execute(
+                """
+                SELECT world_id, snapshot_created_at
+                FROM campaigns
+                WHERE id = ?
+                """,
+                (campaign.id,)
+            ).fetchone()
+
+            if persisted is None:
+                raise ValueError(
+                    "A campanha informada não existe."
+                )
+
+            if persisted["snapshot_created_at"] is not None:
+                raise ValueError(
+                    "Esta campanha já possui "
+                    "um snapshot inicial."
+                )
+            
+            if persisted["world_id"] != campaign.world_id:
+                raise ValueError(
+                    "O mundo da campanha não corresponde "
+                    "ao mundo registrado no banco."
+                )
+            
             created_regions = (
                 self.snapshot_regions(
                     campaign,

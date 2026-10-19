@@ -589,6 +589,141 @@ class CampaignSnapshotTests(unittest.TestCase):
             "Torre restaurada"
         )
 
+    def test_reject_snapshot_with_stale_campaign(self):
+        original_region = self.regions.add(
+            Region(
+                world_id=self.world_id,
+                name="Região original"
+            )
+        )
+
+        assert original_region.id is not None
+
+        # Carrega uma instância antes da inicialização.
+        stale_campaign = next(
+            campaign
+            for campaign in self.campaigns.get_all()
+            if campaign.id == self.campaign_id
+        )
+
+        self.assertIsNone(
+            stale_campaign.snapshot_created_at
+        )
+
+        # Conclui o snapshot com a instância principal.
+        self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        self.assertIsNotNone(
+            self.campaign.snapshot_created_at
+        )
+
+        # O objeto antigo continua desatualizado.
+        self.assertIsNone(
+            stale_campaign.snapshot_created_at
+        )
+
+        # Modificação posterior no World canônico.
+        self.regions.add(
+            Region(
+                world_id=self.world_id,
+                name="Região criada depois"
+            )
+        )
+
+        # A tentativa de repetir o snapshot deve falhar.
+        with self.assertRaisesRegex(
+            ValueError,
+            "já possui"
+        ):
+            self.snapshot_service.create_initial_snapshot(
+                stale_campaign
+            )
+
+        # Apenas a Region original deve estar na Campaign.
+        copied = self.campaign_regions.get_all_by_campaign(
+            self.campaign_id
+        )
+
+        self.assertEqual(len(copied), 1)
+
+        self.assertEqual(
+            copied[0].source_region_id,
+            original_region.id
+        )
+    
+    def test_reject_snapshot_with_different_world(self):
+        # Cria um segundo World.
+        other_world = self.worlds.add(
+            World(name="Mundo B")
+        )
+
+        assert other_world.id is not None
+
+        # Cria uma Region exclusiva do segundo World.
+        other_region = self.regions.add(
+            Region(
+                world_id=other_world.id,
+                name="Região do Mundo B"
+            )
+        )
+
+        assert other_region.id is not None
+
+        # Obtém outra instância da Campaign original.
+        stale_campaign = next(
+            campaign
+            for campaign in self.campaigns.get_all()
+            if campaign.id == self.campaign_id
+        )
+
+        # Altera somente o objeto em memória.
+        # O SQLite continua associado ao Mundo A.
+        stale_campaign.world_id = other_world.id
+
+        self.assertNotEqual(
+            stale_campaign.world_id,
+            self.campaign.world_id
+        )
+
+        # O snapshot deve rejeitar essa divergência.
+        with self.assertRaisesRegex(
+            ValueError,
+            "mundo"
+        ):
+            self.snapshot_service.create_initial_snapshot(
+                stale_campaign
+            )
+
+        # Nenhuma Region indevida deve ser copiada.
+        copied = self.campaign_regions.get_all_by_campaign(
+            self.campaign_id
+        )
+
+        self.assertEqual(copied, [])
+
+        # A Campaign deve permanecer sem snapshot.
+        row = self.database.connection.execute(
+            """
+            SELECT world_id, snapshot_created_at
+            FROM campaigns
+            WHERE id = ?
+            """,
+            (self.campaign_id,)
+        ).fetchone()
+
+        assert row is not None
+
+        self.assertEqual(
+            row["world_id"],
+            self.world_id
+        )
+
+        self.assertIsNone(
+            row["snapshot_created_at"]
+        )
+    
 if __name__ == "__main__":
     unittest.main()
 
