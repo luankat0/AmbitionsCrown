@@ -724,6 +724,174 @@ class CampaignSnapshotTests(unittest.TestCase):
             row["snapshot_created_at"]
         )
     
+    def test_reject_region_snapshot_after_completion(self):
+        original_region = self.regions.add(
+            Region(
+                world_id=self.world_id,
+                name="Região original"
+            )
+        )
+
+        assert original_region.id is not None
+
+        # Conclui o snapshot inicial.
+        self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        # O World continua independente e pode
+        # receber novas Regions.
+        new_region = self.regions.add(
+            Region(
+                world_id=self.world_id,
+                name="Região posterior"
+            )
+        )
+
+        assert new_region.id is not None
+
+        # Simula um objeto desatualizado.
+        # A proteção deve consultar o banco.
+        self.campaign.snapshot_created_at = None
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "snapshot"
+        ):
+            self.snapshot_service.snapshot_regions(
+                self.campaign
+            )
+
+        # Somente a Region original deve existir
+        # dentro da Campaign.
+        copied = (
+            self.campaign_regions.get_all_by_campaign(
+                self.campaign_id
+            )
+        )
+
+        self.assertEqual(
+            {
+                region.source_region_id
+                for region in copied
+            },
+            {original_region.id}
+        )
+        
+    def test_reject_location_snapshot_after_completion(self):
+        (
+            region_id,
+            city_id,
+            castle_id,
+            tower_id
+        ) = self.create_world_hierarchy()
+
+        # Conclui o snapshot inicial.
+        self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        # Adiciona uma nova Location ao World
+        # depois da conclusão do snapshot.
+        new_location = self.locations.add(
+            Location(
+                region_id=region_id,
+                parent_location_id=city_id,
+                name="Bairro posterior"
+            )
+        )
+
+        assert new_location.id is not None
+
+        # Simula um objeto Campaign desatualizado.
+        self.campaign.snapshot_created_at = None
+
+        # Uma chamada direta não pode copiar
+        # novas Locations após o snapshot.
+        with self.assertRaisesRegex(
+            ValueError,
+            "snapshot"
+        ):
+            self.snapshot_service.snapshot_locations(
+                self.campaign
+            )
+
+        # Apenas as três Locations originais
+        # devem permanecer na Campaign.
+        copied = (
+            self.campaign_locations.get_all_by_campaign(
+                self.campaign_id
+            )
+        )
+
+        source_ids = {
+            location.source_location_id
+            for location in copied
+        }
+
+        self.assertEqual(
+            source_ids,
+            {city_id, castle_id, tower_id}
+        )
+
+        self.assertNotIn(
+            new_location.id,
+            source_ids
+        )
+    
+    def test_reject_faction_snapshot_after_completion(self):
+        # Cria uma Faction no World original.
+        original_faction = self.create_faction(
+            "Facção original"
+        )
+
+        # Conclui o snapshot inicial.
+        self.snapshot_service.create_initial_snapshot(
+            self.campaign
+        )
+
+        # Adiciona outra Faction ao World
+        # após a conclusão do snapshot.
+        new_faction = self.create_faction(
+            "Facção posterior"
+        )
+
+        # Simula um objeto Campaign desatualizado.
+        self.campaign.snapshot_created_at = None
+
+        # Não deve ser possível copiar novamente.
+        with self.assertRaisesRegex(
+            ValueError,
+            "snapshot"
+        ):
+            self.snapshot_service.snapshot_factions(
+                self.campaign
+            )
+
+        # Recupera as Factions da Campaign.
+        copied = (
+            self.campaign_factions.get_all_by_campaign(
+                self.campaign_id
+            )
+        )
+
+        source_ids = {
+            faction.source_faction_id
+            for faction in copied
+        }
+
+        # Somente a Faction do snapshot inicial
+        # deve estar presente.
+        self.assertEqual(
+            source_ids,
+            {original_faction.id}
+        )
+
+        self.assertNotIn(
+            new_faction.id,
+            source_ids
+        )
+    
 if __name__ == "__main__":
     unittest.main()
 

@@ -61,6 +61,32 @@ class CampaignSnapshotService:
                 "de uma campanha sem ID."
             )
             
+        connection = (
+            self.campaign_repository
+            .database
+            .connection
+        )
+        
+        persisted = connection.execute(
+            """ 
+            SELECT snapshot_created_at
+            FROM campaigns
+            WHERE id = ?
+            """,
+            (campaign.id,)
+        ).fetchone()
+        
+        if persisted is None:
+            raise ValueError(
+                "A campanha informada não existe."
+            )
+            
+        if persisted["snapshot_created_at"] is not None:
+            raise ValueError(
+                "Não é possível copiar facções "
+                "após a conclusão do snapshot."
+            )
+            
         if campaign.world_id is None:
             return []
         
@@ -122,6 +148,30 @@ class CampaignSnapshotService:
                 "de uma campanha sem ID."
             )
         
+        persisted = (
+            self.campaign_repository.database.connection
+            .execute(
+                """ 
+                SELECT snapshot_created_at
+                FROM campaigns
+                WHERE id = ?
+                """,
+                (campaign.id,)
+            )
+            .fetchone()
+        )
+        
+        if persisted is None:
+            raise ValueError(
+                "A campanha informada não existe."
+            )
+        
+        if persisted["snapshot_created_at"] is not None:
+            raise ValueError(
+                "Não é possível copiar regiões "
+                "após a conclusão do snapshot."
+            )
+        
         if campaign.world_id is None:
             return []
         
@@ -180,6 +230,32 @@ class CampaignSnapshotService:
             raise ValueError(
                 "Não é possível criar snapshot "
                 "de uma campanha sem ID."
+            )
+        
+        connection = (
+            self.campaign_repository
+            .database
+            .connection
+        )
+        
+        persisted = connection.execute(
+            """ 
+            SELECT snapshot_created_at
+            FROM campaigns
+            WHERE id = ?
+            """,
+            (campaign.id,)
+        ).fetchone()
+        
+        if persisted is None:
+            raise ValueError(
+                "A campanha informada não existe."
+            )
+            
+        if persisted["snapshot_created_at"] is not None:
+            raise ValueError(
+                "Não é possível copiar locais "
+                "após a conclusão do snapshot."
             )
             
         if campaign.world_id is None:
