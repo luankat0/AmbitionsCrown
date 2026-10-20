@@ -178,6 +178,11 @@ class RegionRepository:
             )
         )
         
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "A região informada não existe."
+            )
+        
         self.database.connection.commit()
         
         return region
@@ -230,6 +235,11 @@ class RegionRepository:
                 region.id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "A região informada não existe."
+            )
 
         self.database.connection.commit()
 

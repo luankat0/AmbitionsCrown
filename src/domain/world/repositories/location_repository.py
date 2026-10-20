@@ -291,6 +291,11 @@ class LocationRepository:
             )
         )
         
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "O local informado não existe."
+            )
+        
         self.database.connection.commit()
         
         return location
@@ -330,5 +335,10 @@ class LocationRepository:
                 location.id,
             )
         )
+        
+        if cursor.rowcount != 1:
+            raise ValueError(
+                "O local informado não existe."
+            )
         
         self.database.connection.commit()

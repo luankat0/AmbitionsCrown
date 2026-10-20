@@ -87,6 +87,78 @@ class WorldRegionIntegrityTests(unittest.TestCase):
 
         self.assertIsNotNone(self.worlds.get_by_id(world.id))
 
+    def test_reject_update_of_nonexistent_region(self):
+        world = self.worlds.add(
+            World(name="Mundo de teste")
+        )
 
+        assert world.id is not None
+
+        # A Region possui um ID que não existe no banco.
+        region = Region(
+            id=999_999,
+            world_id=world.id,
+            name="Região inexistente"
+        )
+        
+        with self.assertRaisesRegex(
+            ValueError,
+            "não existe"
+        ):
+            self.regions.update(region)
+
+        # Confirma que nenhuma Region foi criada.
+        self.assertIsNone(
+            self.regions.get_by_id(region.id)
+        )
+        
+    def test_reject_delete_of_nonexistent_region(self):
+        world = self.worlds.add(
+            World(name="Mundo de teste")
+        )
+
+        assert world.id is not None
+
+        # Cria uma Region válida para garantir
+        # que outros registros sejam preservados.
+        valid_region = self.regions.add(
+            Region(
+                world_id=world.id,
+                name="Região existente"
+            )
+        )
+
+        assert valid_region.id is not None
+
+        # Esta Region não existe no banco.
+        nonexistent_region = Region(
+            id=999_999,
+            world_id=world.id,
+            name="Região inexistente"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "não existe"
+        ):
+            self.regions.delete(nonexistent_region)
+
+        # A Region válida deve permanecer intacta.
+        saved = self.regions.get_by_id(
+            valid_region.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Região existente"
+        )
+
+        self.assertEqual(
+            saved.world_id,
+            world.id
+        )
+        
 if __name__ == '__main__':
     unittest.main()

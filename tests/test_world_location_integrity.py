@@ -170,5 +170,104 @@ class WorldLocationIntegrityTests(unittest.TestCase):
             self.locations.get_by_id(parent.id)
         )
 
+    def test_reject_update_of_nonexistent_location(self):
+        # Cria uma Location válida para garantir
+        # que outros registros sejam preservados.
+        valid_location = self.locations.add(
+            Location(
+                region_id=self.region_id,
+                name="Cidade existente"
+            )
+        )
+
+        assert valid_location.id is not None
+
+        # Esta Location possui um ID inexistente.
+        nonexistent_location = Location(
+            id=999_999,
+            region_id=self.region_id,
+            name="Cidade inexistente"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "não existe"
+        ):
+            self.locations.update(nonexistent_location)
+
+        # Confirma que a Location inexistente
+        # não foi criada.
+        self.assertIsNone(
+            self.locations.get_by_id(
+                nonexistent_location.id
+            )
+        )
+
+        # Confirma que o registro válido
+        # permanece intacto.
+        saved = self.locations.get_by_id(
+            valid_location.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Cidade existente"
+        )
+
+        self.assertEqual(
+            saved.region_id,
+            self.region_id
+        )
+
+    def test_reject_delete_of_nonexistent_location(self):
+        # Cria uma Location válida.
+        valid_location = self.locations.add(
+            Location(
+                region_id=self.region_id,
+                name="Cidade existente"
+            )
+        )
+
+        assert valid_location.id is not None
+
+        # Esta Location possui um ID inexistente.
+        nonexistent_location = Location(
+            id=999_999,
+            region_id=self.region_id,
+            name="Cidade inexistente"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "não existe"
+        ):
+            self.locations.delete(nonexistent_location)
+
+        # A Location válida deve continuar intacta.
+        saved = self.locations.get_by_id(
+            valid_location.id
+        )
+
+        assert saved is not None
+
+        self.assertEqual(
+            saved.name,
+            "Cidade existente"
+        )
+
+        self.assertEqual(
+            saved.region_id,
+            self.region_id
+        )
+
+        # Nenhum registro deve existir com o ID inválido.
+        self.assertIsNone(
+            self.locations.get_by_id(
+                nonexistent_location.id
+            )
+        )
+
 if __name__ == "__main__":
     unittest.main()
