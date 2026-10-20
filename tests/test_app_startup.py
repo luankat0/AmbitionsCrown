@@ -42,6 +42,31 @@ class AppStartupTests(unittest.TestCase):
             # O banco foi preparado.
             database_class.return_value.create_tables.assert_called_once_with()
 
+    def test_app_reuses_snapshot_service_from_bootstrap(self):
+        with (
+            patch("src.core.app.pygame.init"),
+            patch("src.core.app.pygame.display.set_mode"),
+            patch("src.core.app.pygame.display.set_caption"),
+            patch("src.core.app.pygame.time.Clock"),
+            patch("src.core.app.Database"),
+            patch(
+                "src.core.app.build_dependencies"
+            ) as build_dependencies,
+            patch("src.core.navigation.CampaignScreen"),
+        ):
+            expected_service = (
+                build_dependencies.return_value
+                .campaign_snapshot_service
+            )
+
+            app = App()
+
+            self.assertIs(
+                app.campaign_snapshot_service,
+                expected_service
+            )
+
+            build_dependencies.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()

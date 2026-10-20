@@ -7,10 +7,6 @@ from src.core.bootstrap import build_dependencies
 
 from src.domain.campaign.models.campaign import Campaign
 
-from src.domain.campaign.services.campaign_snapshot_service import (
-    CampaignSnapshotService,
-)
-
 from src.screens.base_screen import BaseScreen
 
 
@@ -37,16 +33,6 @@ class App:
 
         self.campaign_snapshot_service = (
             dependencies.campaign_snapshot_service
-        )
-                
-        self.campaign_snapshot_service = CampaignSnapshotService(
-            self.campaign_repository,
-            self.faction_repository,
-            self.campaign_faction_repository,
-            self.region_repository,
-            self.campaign_region_repository,
-            self.location_repository,
-            self.campaign_location_repository
         )
         
         self.workspace = Workspace()
