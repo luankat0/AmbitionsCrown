@@ -4,7 +4,13 @@ class CampaignRepository:
     def __init__(self, database):
         self.database = database
         
-    def add(self, campaign):        
+    def add(self, campaign):    
+        if campaign.snapshot_created_at is not None:
+            raise ValueError(
+                "Não é possível definir o snapshot "
+                "durante a criação da campanha."
+            ) 
+            
         if campaign.world_id is not None:
             existing_world = self.database.connection.execute(
                 """ 
@@ -30,18 +36,16 @@ class CampaignRepository:
                 description,
                 notes,
                 status,
-                world_id,
-                snapshot_created_at
+                world_id
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 campaign.name,
                 campaign.description,
                 campaign.notes,
                 campaign.status.value,
-                campaign.world_id,
-                campaign.snapshot_created_at
+                campaign.world_id
             )
         )
         

@@ -231,6 +231,42 @@ class CampaignWorldIntegrityTests(unittest.TestCase):
         self.assertIsNone(
             saved["snapshot_created_at"]
         )
+        
+    def test_reject_creation_with_manual_snapshot_timestamp(self):
+        invalid_campaign = Campaign(
+            name="Campanha com snapshot inválido",
+            world_id=self.world_a_id,
+            snapshot_created_at="2099-01-01 00:00:00"
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "snapshot"
+        ):
+            self.campaigns.add(invalid_campaign)
+
+        # A Campaign não deve receber ID.
+        self.assertIsNone(
+            invalid_campaign.id
+        )
+
+        # Nenhuma Campaign inválida deve ser persistida.
+        row = self.database.connection.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM campaigns
+            WHERE name = ?
+            """,
+            ("Campanha com snapshot inválido",)
+        ).fetchone()
+
+        assert row is not None
+
+        self.assertEqual(
+            row["total"],
+            0
+        )
+        
 
 if __name__ == "__main__":
     unittest.main()
