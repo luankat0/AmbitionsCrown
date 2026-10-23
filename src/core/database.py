@@ -22,6 +22,11 @@ class Database:
         )
         
         self.connection.row_factory = sqlite3.Row
+        
+        # Ativa a integridade referencial para esta conexão SQLite
+        self.connection.execute(
+            "PRAGMA foreign_keys = ON"
+        )
     
     def create_tables(self):
         cursor = self.connection.cursor()
