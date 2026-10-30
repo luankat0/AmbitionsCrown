@@ -235,6 +235,26 @@ class Database:
         )
         
         self.connection.commit()
+     
+    def get_schema_version(self) -> int:
+        """
+        Retorna a versão atual do esquema SQLite.
+
+        Não executa migrations e não modifica
+        o banco de dados.
+        """
+
+        row = self.connection.execute(
+            "PRAGMA user_version"
+        ).fetchone()
+
+        if row is None:
+            raise RuntimeError(
+                "Não foi possível consultar "
+                "a versão do esquema SQLite."
+            )
+
+        return int(row[0])
         
     def close(self):
         self.connection.close()

@@ -1350,6 +1350,42 @@ class DatabaseIntegrityTests(unittest.TestCase):
             changes_before
         )
     
+    def test_read_schema_version_without_modifying_it(self):
+        self.database.create_tables()
+
+        connection = self.database.connection
+
+        # Bancos novos ainda não possuem
+        # migrations versionadas.
+        self.assertEqual(
+            self.database.get_schema_version(),
+            0
+        )
+
+        # Simula uma versão diferente apenas no
+        # banco temporário em memória deste teste.
+        connection.execute(
+            "PRAGMA user_version = 3"
+        )
+
+        # O método deve ler a versão real.
+        self.assertEqual(
+            self.database.get_schema_version(),
+            3
+        )
+
+        # A consulta não deve modificar a versão.
+        row = connection.execute(
+            "PRAGMA user_version"
+        ).fetchone()
+
+        self.assertIsNotNone(row)
+
+        self.assertEqual(
+            row[0],
+            3
+        )
+    
 if __name__ == "__main__":
     unittest.main()
     
