@@ -1,5 +1,7 @@
 import sqlite3
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from src.core.database import Database
 
@@ -1385,6 +1387,75 @@ class DatabaseIntegrityTests(unittest.TestCase):
             row[0],
             3
         )
+    
+    def test_backup_preserves_data_without_overwriting(self):
+        self.database.create_tables()
+
+        connection = self.database.connection
+
+        # Cria um registro no banco original.
+        connection.execute(
+            """
+            INSERT INTO worlds (name)
+            VALUES (?)
+            """,
+            ("Mundo original",)
+        )
+
+        connection.commit()
+
+        with TemporaryDirectory() as directory:
+            backup_path = (
+                Path(directory) / "ambitions_crown_backup.db"
+            )
+
+            # Cria o backup.
+            result = self.database.backup_to(
+                backup_path
+            )
+
+            self.assertEqual(result, backup_path)
+            self.assertTrue(backup_path.is_file())
+
+            # Modifica o banco original após o backup.
+            connection.execute(
+                """
+                INSERT INTO worlds (name)
+                VALUES (?)
+                """,
+                ("Mundo posterior",)
+            )
+
+            connection.commit()
+
+            # Um backup existente não pode ser
+            # sobrescrito acidentalmente.
+            with self.assertRaises(FileExistsError):
+                self.database.backup_to(
+                    backup_path
+                )
+
+            # Verifica o conteúdo do backup.
+            backup_connection = sqlite3.connect(
+                backup_path
+            )
+
+            try:
+                rows = backup_connection.execute(
+                    """
+                    SELECT name
+                    FROM worlds
+                    ORDER BY id
+                    """
+                ).fetchall()
+
+                self.assertEqual(
+                    rows,
+                    [("Mundo original",)]
+                )
+
+            finally:
+                backup_connection.close()
     
 if __name__ == "__main__":
     unittest.main()

@@ -255,6 +255,56 @@ class Database:
             )
 
         return int(row[0])
+     
+    def backup_to(
+        self,
+        destination_path: str | Path
+    ) -> Path:
+        """
+        Cria um backup consistente do SQLite.
+
+        Não sobrescreve arquivos existentes.
+        Não modifica o banco original.
+        """
+
+        if self.connection.in_transaction:
+            raise RuntimeError(
+                "Finalize a transação antes "
+                "de criar o backup."
+            )
+
+        destination = Path(destination_path)
+
+        destination.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        # Reserva o caminho sem sobrescrever
+        # um backup já existente.
+        with destination.open("xb"):
+            pass
+
+        try:
+            backup_connection = sqlite3.connect(
+                destination
+            )
+
+            try:
+                self.connection.backup(
+                    backup_connection
+                )
+
+            finally:
+                backup_connection.close()
+
+        except Exception:
+            # Remove somente o arquivo reservado
+            # por esta chamada, se o backup falhar.
+            destination.unlink(missing_ok=True)
+            raise
+
+        return destination 
         
     def close(self):
         self.connection.close()
