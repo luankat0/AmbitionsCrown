@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from src.core.database import Database
+from src.core.database_migrations import apply_migrations
 
 from src.core.database_audit import (
     find_orphan_region_ids,
@@ -18,7 +19,8 @@ from src.core.database_audit import (
     find_orphan_campaign_faction_ids,
     find_orphan_campaign_world_ids,
     find_orphan_faction_world_ids,
-    audit_database_integrity
+    audit_database_integrity,
+    validate_migration_integrity
 )
 
 
@@ -1456,6 +1458,152 @@ class DatabaseIntegrityTests(unittest.TestCase):
 
             finally:
                 backup_connection.close()
+    
+    def test_block_migration_precheck_with_invalid_data(self):
+        self.database.create_tables()
+
+        connection = self.database.connection
+
+        # Um banco sem inconsistências deve
+        # passar pela validação.
+        self.assertIsNone(
+            validate_migration_integrity(connection)
+        )
+
+        # Insere uma Region cujo World não existe.
+        orphan_id = connection.execute(
+            """
+            INSERT INTO regions (world_id, name)
+            VALUES (?, ?)
+            """,
+            (999_999, "Região órfã")
+        ).lastrowid
+
+        version_before = (
+            self.database.get_schema_version()
+        )
+
+        changes_before = connection.total_changes
+
+        # A validação deve bloquear a operação.
+        with self.assertRaises(ValueError) as error:
+            validate_migration_integrity(connection)
+
+        message = str(error.exception)
+
+        # Identifica a categoria do problema.
+        self.assertIn(
+            "regions_without_world",
+            message
+        )
+
+        # Informa o registro afetado.
+        self.assertIn(
+            str(orphan_id),
+            message
+        )
+
+        # Nenhum dado pode ser modificado.
+        self.assertEqual(
+            connection.total_changes,
+            changes_before
+        )
+
+        # A versão do esquema permanece intacta.
+        self.assertEqual(
+            self.database.get_schema_version(),
+            version_before
+        )
+
+        # O registro permanece para análise.
+        saved = connection.execute(
+            """
+            SELECT id
+            FROM regions
+            WHERE id = ?
+            """,
+            (orphan_id,)
+        ).fetchone()
+
+        self.assertIsNotNone(saved)
+    
+    def test_apply_versioned_migration_with_backup(self):
+        self.database.create_tables()
+
+        connection = self.database.connection
+
+        # Simula uma migration de versão 1.
+        def migration_v1(conn):
+            conn.execute(
+                """
+                CREATE TABLE migration_test (
+                    id INTEGER PRIMARY KEY
+                )
+                """
+            )
+
+        with TemporaryDirectory() as directory:
+            backup_path = (
+                Path(directory) / "before_v1.db"
+            )
+
+            # Executa a migration no banco em memória.
+            version = apply_migrations(
+                database=self.database,
+                migrations={1: migration_v1},
+                backup_path=backup_path
+            )
+
+            self.assertEqual(version, 1)
+
+            self.assertEqual(
+                self.database.get_schema_version(),
+                1
+            )
+
+            # A nova tabela deve existir.
+            table = connection.execute(
+                """
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table'
+                AND name = 'migration_test'
+                """
+            ).fetchone()
+
+            self.assertIsNotNone(table)
+
+            # O backup deve representar o estado
+            # anterior à migration.
+            self.assertTrue(backup_path.is_file())
+
+            with sqlite3.connect(backup_path) as backup:
+                backup_version = backup.execute(
+                    "PRAGMA user_version"
+                ).fetchone()[0]
+
+                self.assertEqual(backup_version, 0)
+
+                original_table = backup.execute(
+                    """
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type = 'table'
+                    AND name = 'migration_test'
+                    """
+                ).fetchone()
+
+                self.assertIsNone(original_table)
+
+            # Executar novamente não pode aplicar
+            # a mesma migration ou recriar o backup.
+            version = apply_migrations(
+                database=self.database,
+                migrations={1: migration_v1},
+                backup_path=backup_path
+            )
+
+            self.assertEqual(version, 1)
     
 if __name__ == "__main__":
     unittest.main()

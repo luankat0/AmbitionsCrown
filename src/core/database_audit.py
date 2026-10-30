@@ -428,3 +428,37 @@ def audit_database_integrity(
         for name, check in checks.items()
     }
 
+def validate_migration_integrity(
+    connection: sqlite3.Connection
+) -> None:
+    """
+    Valida as relações verificadas pelas
+    auditorias antes de uma migração.
+
+    Lança ValueError se encontrar problemas.
+
+    Não altera registros nem executa migrations.
+    """
+
+    report = audit_database_integrity(
+        connection
+    )
+
+    problems = {
+        category: ids
+        for category, ids in report.items()
+        if ids
+    }
+
+    if not problems:
+        return
+
+    details = "; ".join(
+        f"{category}: IDs {ids}"
+        for category, ids in problems.items()
+    )
+
+    raise ValueError(
+        "Migração bloqueada: foram encontradas "
+        f"inconsistências no banco. {details}"
+    )
